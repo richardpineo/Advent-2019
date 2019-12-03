@@ -9,8 +9,9 @@ class Solve1 : ISolve
         return "Day 1: The Tyranny of the Rocket Equation";
     }
 
-    const string inputA = "Input//1a.txt";
+    const string Input = "Input//1a.txt";
     const string ExampleA = "Examples//1a.txt";
+    const string ExampleB = "Examples//1b.txt";
 
     public bool Prove(bool isA)
     {
@@ -19,15 +20,26 @@ class Solve1 : ISolve
 
     private bool ProveA()
     {
-        string[] lines = File.ReadAllLines(ExampleA, Encoding.UTF8);
+        return Prove(CalculateFuelSimple, ExampleA);
+    }
+
+    public bool ProveB()
+    {
+        return Prove(CalculateFuelComplex, ExampleB);
+    }
+
+    private bool Prove(Func<int, int> calcFn, string file)
+    {
+        string[] lines = File.ReadAllLines(file, Encoding.UTF8);
         foreach (var line in lines)
         {
             var inOut = line.Split(" ");
             int mass = int.Parse(inOut[0]);
-            int fuel = CalculateFuel(mass);
-            if (int.Parse(inOut[1]) != fuel)
+            int fuel = calcFn(mass);
+            int expected = int.Parse(inOut[1]);
+            if (expected != fuel)
             {
-                Console.WriteLine($"{mass} does not equal {fuel}");
+                Console.WriteLine($"{mass} expected {expected} which does not equal {fuel}");
                 return false;
             }
         }
@@ -35,10 +47,6 @@ class Solve1 : ISolve
         return true;
     }
 
-    public bool ProveB()
-    {
-        return false;
-    }
     public string Solve(bool isA)
     {
         return isA ? SolveA() : SolveB();
@@ -46,26 +54,41 @@ class Solve1 : ISolve
 
     public string SolveA()
     {
-        string[] lines = File.ReadAllLines(inputA, Encoding.UTF8);
+        return Solve(CalculateFuelSimple);
+    }
+
+    public string SolveB()
+    {
+        return Solve(CalculateFuelComplex);
+    }
+
+    private string Solve(Func<int, int> calcFn)
+    {
+        string[] lines = File.ReadAllLines(Input, Encoding.UTF8);
 
         var sum = 0;
         foreach (var line in lines)
         {
-            var fuel = CalculateFuel(int.Parse(line));
+            var fuel = calcFn(int.Parse(line));
             sum += fuel;
         }
         return sum.ToString();
     }
 
-
-    private int CalculateFuel(int mass)
+    private int CalculateFuelSimple(int mass)
     {
         var fuel = mass / 3 - 2;
         return fuel;
     }
 
-    public string SolveB()
+    private int CalculateFuelComplex(int mass)
     {
-        return "NotImpl";
+        int fuel = CalculateFuelSimple(mass);
+        int fuelFuel = CalculateFuelSimple(fuel);
+        if (fuelFuel > 0)
+        {
+            fuel += CalculateFuelComplex(fuel);
+        }
+        return fuel;
     }
 }

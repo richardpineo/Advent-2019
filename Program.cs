@@ -8,7 +8,8 @@ namespace AOC2019
         static void Main(string[] args)
         {
             ISolve[] toSolve = {
-                new Solve1()
+                new Solve1(),
+                new Solve2()
             };
 
             foreach (var solve in toSolve)

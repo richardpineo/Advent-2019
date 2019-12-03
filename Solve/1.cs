@@ -9,7 +9,7 @@ class Solve1 : ISolve
         return "Day 1: The Tyranny of the Rocket Equation";
     }
 
-    const string Input = "Input//1a.txt";
+    const string Input = "Input//1.txt";
     const string ExampleA = "Examples//1a.txt";
     const string ExampleB = "Examples//1b.txt";
 

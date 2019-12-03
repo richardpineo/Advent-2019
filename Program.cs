@@ -14,20 +14,32 @@ namespace AOC2019
             foreach (var solve in toSolve)
             {
                 Console.WriteLine($"Solving: {solve.Description()}");
-
-                Console.Write($"  Prove A: ");
-                if( !solve.ProveA() ) 
+                if( SolveOne(solve, true) && SolveOne(solve, false)) 
                 {
-                    Console.WriteLine("Failure!");
+                    Console.WriteLine("Success!");
+                }
+
+                Console.WriteLine();
+            }
+        }
+
+        static bool SolveOne(ISolve solve, bool isA)
+        {
+            var desc = isA ? "A" : "B";
+                Console.Write($"  Prove ${desc}: ");
+                if( !solve.Prove(isA) ) 
+                {
+                    Console.WriteLine("Embarrassing Failure!");
+                    return false;
                 }
                 else
                 {
-                    Console.WriteLine("Success!");
-                    var a = solve.SolveA();
-                    Console.WriteLine($"  Solve A: {a}");
+                    Console.WriteLine("Tremendous Success");
+                    var solution = solve.Solve(isA);
+                    Console.WriteLine($"  Solve {desc}: {solution}");
+                    return true;
                 }
 
-            }
         }
     }
 }

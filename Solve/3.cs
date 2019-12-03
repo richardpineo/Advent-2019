@@ -45,7 +45,18 @@ class Solve3 : ISolve
 
     private int FindMinSteps(Point[] wire1, Point[] wire2)
     {
-        return 0;
+        var intersections = FindIntersections(wire1, wire2);
+        var array1 = wire1.ToArray();
+        var array2 = wire2.ToArray();
+
+        var distances = new List<int>();
+        foreach (var intersection in intersections)
+        {
+            int index1 = Array.IndexOf(array1, intersection);
+            int index2 = Array.IndexOf(array2, intersection);
+            distances.Add(index1 + 1 + index2 + 1);
+        }
+        return distances.Min();
     }
 
     private int FindMinDistance(Point[] wire1, Point[] wire2)
@@ -117,7 +128,7 @@ class Solve3 : ISolve
         var points1 = MakePoints(lines[0]);
         var points2 = MakePoints(lines[1]);
 
-        var actual = FindMinDistance(points1, points2);
+        var actual = minFn(points1, points2);
         return actual.ToString();
     }
 }

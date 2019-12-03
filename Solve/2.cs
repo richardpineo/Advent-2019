@@ -47,7 +47,8 @@ class Solve2 : ISolve
 
     public bool ProveB()
     {
-        return false;
+        // No prove here.
+        return true;
     }
 
     private List<int> ParseInput(string input)
@@ -92,19 +93,35 @@ class Solve2 : ISolve
 
     public string SolveA()
     {
+        return SolveFor(12, 2).ToString();
+    }
+
+    private int SolveFor(int noun, int verb)
+    {
         string[] lines = File.ReadAllLines(Input, Encoding.UTF8);
         var program = ParseInput(lines[0]);
 
-        program[1] = 12;
-        program[2] = 2;
+        program[1] = noun;
+        program[2] = verb;
 
         RunProgram(program);
 
-        return program[0].ToString();
+        return program[0];
     }
 
     public string SolveB()
     {
-        return "NotImpl";
+        for (int noun = 0; noun < 100; noun++)
+        {
+            for (int verb = 0; verb < 100; verb++)
+            {
+                var found = SolveFor(noun, verb);
+                if (found == 19690720)
+                {
+                    return String.Format("{0:00}", noun) + String.Format("{0:00}", verb);
+                }
+            }
+        }
+        return "Not found!";
     }
 }

@@ -18,18 +18,19 @@ class Solve3 : ISolve
 
     public bool Prove(bool isA)
     {
-        return isA ? ProveA() : ProveB();
+        return isA ? ProveFor(ExampleA, FindMinDistance) : ProveFor(ExampleB, FindMinSteps);
     }
 
-
-    private bool ProveA()
+    private bool ProveFor(string file, Func<Point[], Point[], int> minFn)
     {
-        string[] lines = File.ReadAllLines(ExampleA, Encoding.UTF8);
+        string[] lines = File.ReadAllLines(file, Encoding.UTF8);
         for (int i = 0; i < lines.Length; i += 3)
         {
             var expected = int.Parse(lines[i + 2]);
 
-            var actual = FindMinDistance(lines[i], lines[i + 1]);
+            var points1 = MakePoints(lines[i]);
+            var points2 = MakePoints(lines[i + 1]);
+            var actual = minFn(points1, points2);
 
             if (expected != actual)
             {
@@ -39,16 +40,17 @@ class Solve3 : ISolve
                 return false;
             }
         }
-
         return true;
     }
 
-    private int FindMinDistance(string wire1, string wire2)
+    private int FindMinSteps(Point[] wire1, Point[] wire2)
     {
-        var points1 = MakePoints(wire1);
-        var points2 = MakePoints(wire2);
+        return 0;
+    }
 
-        var intersections = FindIntersections(points1, points2);
+    private int FindMinDistance(Point[] wire1, Point[] wire2)
+    {
+        var intersections = FindIntersections(wire1, wire2);
         var distances = intersections.Select(intersection => Math.Abs(intersection.X) + Math.Abs(intersection.Y));
         return distances.Min();
     }
@@ -104,26 +106,18 @@ class Solve3 : ISolve
         return points.ToArray();
     }
 
-    public bool ProveB()
-    {
-        return false;
-    }
-
     public string Solve(bool isA)
     {
-        return isA ? SolveA() : SolveB();
+        return isA ? SolveFor(FindMinDistance) : SolveFor(FindMinSteps);
     }
 
-    public string SolveA()
+    private string SolveFor(Func<Point[], Point[], int> minFn)
     {
         string[] lines = File.ReadAllLines(Input, Encoding.UTF8);
+        var points1 = MakePoints(lines[0]);
+        var points2 = MakePoints(lines[1]);
 
-        var actual = FindMinDistance(lines[0], lines[1]);
+        var actual = FindMinDistance(points1, points2);
         return actual.ToString();
-    }
-
-    public string SolveB()
-    {
-        return "NotImpl";
     }
 }

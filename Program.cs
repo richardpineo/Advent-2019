@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 // https://adventofcode.com/
 namespace AOC2019
@@ -9,17 +10,21 @@ namespace AOC2019
         {
             ISolve[] toSolve = {
                 new Solve1(),
-                new Solve2()
+                new Solve2(),
+                new Solve3()
             };
 
             foreach (var solve in toSolve)
             {
+                var stopwatch = new Stopwatch();
+                stopwatch.Start();
+
                 Console.WriteLine($"Solving: {solve.Description()}");
                 if (SolveOne(solve, true) && SolveOne(solve, false))
                 {
                     Console.WriteLine("Success!");
                 }
-
+                Console.WriteLine($"    {stopwatch.ElapsedMilliseconds} ms");
                 Console.WriteLine();
             }
         }

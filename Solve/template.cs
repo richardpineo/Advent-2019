@@ -2,8 +2,6 @@ using System;
 using System.IO;
 using System.Text;
 
-// Find/replace X for the number.
-
 class SolveX : ISolve
 {
     public string Description()

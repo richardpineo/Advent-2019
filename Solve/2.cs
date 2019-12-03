@@ -3,8 +3,6 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 
-// Find/replace 2 for the number.
-
 class Solve2 : ISolve
 {
     public string Description()

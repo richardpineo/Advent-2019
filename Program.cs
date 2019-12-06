@@ -11,7 +11,8 @@ namespace AOC2019
             ISolve[] toSolve = {
                 new Solve1(),
                 new Solve2(),
-                new Solve3()
+                new Solve3(),
+                new Solve4()
             };
 
             foreach (var solve in toSolve)

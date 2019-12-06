@@ -13,6 +13,7 @@ namespace AOC2019
                 new Solve2(),
                 new Solve3(),
                 new Solve4(),
+                new Solve5(),
                 new Solve6()
             };
 

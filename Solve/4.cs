@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Linq;
 
 class Solve4 : ISolve
 {
@@ -15,12 +16,12 @@ class Solve4 : ISolve
 
     public bool Prove(bool isA)
     {
-        return isA ? ProveA() : false;
+        return isA ? ProveFor(evaluateA, ExampleA) : ProveFor(evaluateB, ExampleB);
     }
 
-    private bool ProveA()
+    private bool ProveFor(Func<string, bool> evaluate, string filename)
     {
-        string[] lines = File.ReadAllLines(ExampleA, Encoding.UTF8);
+        string[] lines = File.ReadAllLines(filename, Encoding.UTF8);
         foreach (var line in lines)
         {
             var inOut = line.Split(" ");
@@ -34,9 +35,14 @@ class Solve4 : ISolve
         return true;
     }
 
-    private bool evaluate(string s)
+    private bool evaluateA(string s)
     {
         return hasAdjacencies(s) && strictlyIncreasing(s);
+    }
+
+    private bool evaluateB(string s)
+    {
+        return hasAtLeastOneDouble(s) && strictlyIncreasing(s);
     }
 
     private bool strictlyIncreasing(string s)
@@ -68,12 +74,22 @@ class Solve4 : ISolve
         }
         return false;
     }
-    public string Solve(bool isA)
+
+    private bool hasAtLeastOneDouble(string s)
     {
-        return isA ? SolveA() : "NotImpl";
+        var counts = s.GroupBy(c => c)
+                      .Select(g => g.Count())
+                      .Where(c => c == 2);
+
+        return counts.Count() > 0;
     }
 
-    private string SolveA()
+    public string Solve(bool isA)
+    {
+        return isA ? SolveFor(evaluateA) : SolveFor(evaluateB);
+    }
+
+    private string SolveFor(Func<string, bool> evaluate)
     {
         string[] lines = File.ReadAllLines(Input, Encoding.UTF8);
         var min = int.Parse(lines[0]);
@@ -88,4 +104,5 @@ class Solve4 : ISolve
         }
         return count.ToString();
     }
+
 }

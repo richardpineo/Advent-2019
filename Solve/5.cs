@@ -13,7 +13,7 @@ class Solve5 : ISolve
 
     const string Input = "Input//5.txt";
     const string ExampleA = "Examples//5a.txt";
-    const string ExampleB = "Examples//5a.txt";
+    const string ExampleB = "Examples//5b.txt";
 
     public bool Prove(bool isA)
     {
@@ -46,7 +46,31 @@ class Solve5 : ISolve
 
     public bool ProveB()
     {
-        // No prove here.
+        string[] lines = File.ReadAllLines(ExampleB, Encoding.UTF8);
+
+        var tests = new Dictionary<int, int>();
+        tests[7] = 999;
+        tests[8] = 1000;
+        tests[9] = 1001;
+
+        foreach (var line in lines)
+        {
+            var inputs = line.Split(" ");
+            var input = int.Parse(inputs[0]);
+            var expected = int.Parse(inputs[1]);
+            var program = ParseInput(inputs[2]);
+            var output = RunProgram(program, input);
+            if (output != expected)
+            {
+                Console.WriteLine();
+                Console.WriteLine($"  Line:       {inputs[2]}");
+                Console.WriteLine($"  Input:      {input}");
+                Console.WriteLine($"  Expected:   {expected}");
+                Console.WriteLine($"  Actual:     {output}");
+
+                return false;
+            }
+        }
         return true;
     }
 
@@ -64,17 +88,31 @@ class Solve5 : ISolve
     private int RunProgram(List<int> program, int input)
     {
         int output = 666;
+        for (int pos = 0; pos != -1; pos = Step(program, pos, input, ref output))
+        { }
+        return output;
+    }
+
+    private int RunProgramB(List<int> program, int input)
+    {
+        int output = 666;
         int pos = 0;
-        for (int step = 0; step != -1; step = Step(program, pos, input, ref output))
+        for (int step = 0; step != -1; pos += step)
         {
-            // nothing
-            pos += step;
+            var before = program[pos];
+            step = Step(program, pos, input, ref output);
+            var after = program[pos];
+            if (before != after)
+            {
+                step = 0;
+            }
         }
         return output;
     }
 
-    private bool[] getModes(int numArgs, int command)
+    private bool[] getModes(int command)
     {
+        var numArgs = 10; // max of 10 args.
         var bitfield = command / 100;
         var modes = new bool[numArgs];
         for (int i = 0; i < numArgs; i++)
@@ -89,57 +127,81 @@ class Solve5 : ISolve
     {
         int command = program[pos];
         int opCode = command % 100;
+        var modes = getModes(command);
+
         switch (opCode)
         {
             case 1:
-                {
-                    var modes = getModes(3, command);
-                    return processAdd(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
-                }
+                return pos + add(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
             case 2:
-                {
-                    var modes = getModes(3, command);
-                    return processMul(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
-                }
+                return pos + multiply(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
             case 3:
-                {
-                    return processInput(program[pos + 1], input, program);
-
-                }
+                return pos + read(program[pos + 1], input, program);
             case 4:
-                {
-                    return processOutput(program[pos + 1], program, ref output);
-                }
+                return pos + write(modes, program[pos + 1], program, ref output);
+            case 5:
+                return jumpTrue(modes, pos, program[pos + 1], program[pos + 2], program);
+            case 6:
+                return jumpFalse(modes, pos, program[pos + 1], program[pos + 2], program);
+            case 7:
+                return pos + lessThan(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
+            case 8:
+                return pos + equals(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
             case 99:
                 return -1;
         }
         throw new Exception("opcode is out of range");
     }
 
-    public int processAdd(bool[] modes, int op1, int op2, int op3, List<int> program)
+    public int add(bool[] modes, int op1, int op2, int op3, List<int> program)
     {
         int val1 = modes[0] ? op1 : program[op1];
         int val2 = modes[1] ? op2 : program[op2];
         program[op3] = val1 + val2;
         return 4;
     }
-    public int processMul(bool[] modes, int op1, int op2, int op3, List<int> program)
+    public int multiply(bool[] modes, int op1, int op2, int op3, List<int> program)
     {
         int val1 = modes[0] ? op1 : program[op1];
         int val2 = modes[1] ? op2 : program[op2];
         program[op3] = val1 * val2;
         return 4;
     }
-    public int processInput(int op1, int input, List<int> program)
+    public int read(int op1, int input, List<int> program)
     {
         program[op1] = input;
         return 2;
     }
-
-    public int processOutput(int op1, List<int> program, ref int output)
+    public int write(bool[] modes, int op1, List<int> program, ref int output)
     {
-        output = program[op1];
+        output = modes[0] ? op1 : program[op1]; ;
         return 2;
+    }
+    public int jumpTrue(bool[] modes, int pos, int op1, int op2, List<int> program)
+    {
+        int val1 = modes[0] ? op1 : program[op1];
+        int val2 = modes[1] ? op2 : program[op2];
+        return val1 != 0 ? val2 : (pos + 3);
+    }
+    public int jumpFalse(bool[] modes, int pos, int op1, int op2, List<int> program)
+    {
+        int val1 = modes[0] ? op1 : program[op1];
+        int val2 = modes[1] ? op2 : program[op2];
+        return val1 == 0 ? val2 : (pos + 3);
+    }
+    public int lessThan(bool[] modes, int op1, int op2, int op3, List<int> program)
+    {
+        int val1 = modes[0] ? op1 : program[op1];
+        int val2 = modes[1] ? op2 : program[op2];
+        program[op3] = val1 < val2 ? 1 : 0;
+        return 4;
+    }
+    public int equals(bool[] modes, int op1, int op2, int op3, List<int> program)
+    {
+        int val1 = modes[0] ? op1 : program[op1];
+        int val2 = modes[1] ? op2 : program[op2];
+        program[op3] = val1 == val2 ? 1 : 0;
+        return 4;
     }
     public string Solve(bool isA)
     {
@@ -148,18 +210,17 @@ class Solve5 : ISolve
 
     public string SolveA()
     {
-        return SolveFor().ToString();
-    }
-
-    private int SolveFor()
-    {
-        var lines = File.ReadAllLines(Input, Encoding.UTF8);
-        var start = ParseInput(lines[0]);
-        return RunProgram(start, 1);
+        return SolveFor(RunProgram, 1).ToString();
     }
 
     public string SolveB()
     {
-        return "Not found!";
+        return SolveFor(RunProgramB, 5).ToString();
+    }
+    private int SolveFor(Func<List<int>, int, int> solver, int input)
+    {
+        var lines = File.ReadAllLines(Input, Encoding.UTF8);
+        var start = ParseInput(lines[0]);
+        return solver(start, input);
     }
 }

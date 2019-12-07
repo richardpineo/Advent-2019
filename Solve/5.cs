@@ -96,16 +96,8 @@ class Solve5 : ISolve
     private int RunProgramB(List<int> program, int input)
     {
         int output = 666;
-        int pos = 0;
-        for (int step = 0; step != -1; pos += step)
+        for (int pos = 0; pos != -1; pos = Step(program, pos, input, ref output))
         {
-            var before = program[pos];
-            step = Step(program, pos, input, ref output);
-            var after = program[pos];
-            if (before != after)
-            {
-                step = 0;
-            }
         }
         return output;
     }

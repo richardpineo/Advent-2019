@@ -53,41 +53,90 @@ class Solve7 : ISolve
             int[] inputs = { phase, power };
 
             var program = ParseInput(rawProgram);
-            power = RunProgram(program, inputs);
+            power = RunProgramSimple(program, inputs);
         }
         return power;
     }
 
-    public bool ProveB()
+    private bool ProveB()
     {
-        return false;
-        /* 
-            string[] lines = File.ReadAllLines(ExampleB, Encoding.UTF8);
+        string[] lines = File.ReadAllLines(ExampleA, Encoding.UTF8);
+        foreach (var line in lines)
+        {
+            var tokens = line.Split(" ");
 
-            var tests = new Dictionary<int, int>();
-            tests[7] = 999;
-            tests[8] = 1000;
-            tests[9] = 1001;
+            var answer = int.Parse(tokens[0]);
 
-            foreach (var line in lines)
+            // Array of 5 int
+            var order = tokens[1].Split(",").Select(t => int.Parse(t));
+
+            var power = ComputePowerFeedback(order.ToArray(), tokens[2]);
+
+            if (power != answer)
             {
-                var inputs = line.Split(" ");
-                var input = int.Parse(inputs[0]);
-                var expected = int.Parse(inputs[1]);
-                var program = ParseInput(inputs[2]);
-                var output = RunProgram(program, input);
-                if (output != expected)
-                {
-                    Console.WriteLine();
-                    Console.WriteLine($"  Line:       {inputs[2]}");
-                    Console.WriteLine($"  Input:      {input}");
-                    Console.WriteLine($"  Expected:   {expected}");
-                    Console.WriteLine($"  Actual:     {output}");
+                Console.WriteLine($"{power} should have been {answer}, {tokens[2]}");
+                return false;
+            }
+        }
 
-                    return false;
+        return true;
+    }
+
+    private int ComputePowerFeedback(int[] order, string rawProgram)
+    {
+        var programs = new List<int>[5] {
+             ParseInput(rawProgram),
+             ParseInput(rawProgram),
+             ParseInput(rawProgram),
+             ParseInput(rawProgram),
+             ParseInput(rawProgram)
+        };
+
+        var states = new List<State>();
+        states.Add(new State { input = order[0], program = programs[0].ToArray() });
+        states.Add(new State { input = order[1], program = programs[1].ToArray() });
+        states.Add(new State { input = order[2], program = programs[2].ToArray() });
+        states.Add(new State { input = order[3], program = programs[3].ToArray() });
+        states.Add(new State { input = order[4], program = programs[4].ToArray() });
+
+        // Initialize
+        var hasInitialized = false;
+
+        while (true)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                if (i == 0 && !hasInitialized && !states[0].input.HasValue)
+                {
+                    hasInitialized = true;
+                    states[0].input = 0;
+                }
+
+                if (states[i].pos != -1)
+                {
+                    states[i].pos = Step(states[i]);
+                }
+                else if (i == 4)
+                {
+                    // We've already pushed to the first state.
+                    return states[0].input.Value;
+                }
+
+                if (states[i].output.HasValue)
+                {
+                    var toState = i + 1;
+                    if (toState == 5)
+                    {
+                        toState = 0;
+                    }
+                    if (!states[toState].input.HasValue)
+                    {
+                        states[toState].input = states[i].output;
+                        states[i].output = null;
+                    }
                 }
             }
-            return true; */
+        }
     }
 
     private List<int> ParseInput(string input)
@@ -103,17 +152,24 @@ class Solve7 : ISolve
 
     class State
     {
-        public int output = -1;
-        public int[] inputs;
-        public int inputPos = 0;
+        public int? output;
+        public int? input;
+        public int pos;
+        public int[] program;
     }
 
-    private int RunProgram(List<int> program, int[] inputs)
+    private int RunProgramSimple(List<int> program, int[] inputs)
     {
-        var state = new State { inputs = inputs };
-        for (int pos = 0; pos != -1; pos = Step(program, pos, ref state))
-        { }
-        return state.output;
+        var inputPos = 0;
+        var state = new State { input = inputs[inputPos++], program = program.ToArray() };
+        for (; state.pos != -1; state.pos = Step(state))
+        {
+            if (!state.input.HasValue && inputPos < inputs.Length)
+            {
+                state.input = inputs[inputPos++];
+            }
+        }
+        return state.output ?? -1;
     }
 
     private bool[] getModes(int command)
@@ -129,8 +185,10 @@ class Solve7 : ISolve
         return modes;
     }
 
-    private int Step(List<int> program, int pos, ref State state)
+    private int Step(State state)
     {
+        ref int pos = ref state.pos;
+        var program = state.program;
         int command = program[pos];
         int opCode = command % 100;
         var modes = getModes(command);
@@ -142,7 +200,7 @@ class Solve7 : ISolve
             case 2:
                 return pos + multiply(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
             case 3:
-                return pos + read(program[pos + 1], state.inputs[state.inputPos++], program);
+                return pos + read(program[pos + 1], ref state.input, program);
             case 4:
                 return pos + write(modes, program[pos + 1], program, ref state.output);
             case 5:
@@ -159,50 +217,59 @@ class Solve7 : ISolve
         throw new Exception("opcode is out of range");
     }
 
-    public int add(bool[] modes, int op1, int op2, int op3, List<int> program)
+    public int add(bool[] modes, int op1, int op2, int op3, int[] program)
     {
         int val1 = modes[0] ? op1 : program[op1];
         int val2 = modes[1] ? op2 : program[op2];
         program[op3] = val1 + val2;
         return 4;
     }
-    public int multiply(bool[] modes, int op1, int op2, int op3, List<int> program)
+    public int multiply(bool[] modes, int op1, int op2, int op3, int[] program)
     {
         int val1 = modes[0] ? op1 : program[op1];
         int val2 = modes[1] ? op2 : program[op2];
         program[op3] = val1 * val2;
         return 4;
     }
-    public int read(int op1, int input, List<int> program)
+    public int read(int op1, ref int? input, int[] program)
     {
-        program[op1] = input;
+        if (!input.HasValue)
+        {
+            return 0;
+        }
+        program[op1] = input.Value;
+        input = null;
         return 2;
     }
-    public int write(bool[] modes, int op1, List<int> program, ref int output)
+    public int write(bool[] modes, int op1, int[] program, ref int? output)
     {
+        if (output.HasValue)
+        {
+            return 0;
+        }
         output = modes[0] ? op1 : program[op1]; ;
         return 2;
     }
-    public int jumpTrue(bool[] modes, int pos, int op1, int op2, List<int> program)
+    public int jumpTrue(bool[] modes, int pos, int op1, int op2, int[] program)
     {
         int val1 = modes[0] ? op1 : program[op1];
         int val2 = modes[1] ? op2 : program[op2];
         return val1 != 0 ? val2 : (pos + 3);
     }
-    public int jumpFalse(bool[] modes, int pos, int op1, int op2, List<int> program)
+    public int jumpFalse(bool[] modes, int pos, int op1, int op2, int[] program)
     {
         int val1 = modes[0] ? op1 : program[op1];
         int val2 = modes[1] ? op2 : program[op2];
         return val1 == 0 ? val2 : (pos + 3);
     }
-    public int lessThan(bool[] modes, int op1, int op2, int op3, List<int> program)
+    public int lessThan(bool[] modes, int op1, int op2, int op3, int[] program)
     {
         int val1 = modes[0] ? op1 : program[op1];
         int val2 = modes[1] ? op2 : program[op2];
         program[op3] = val1 < val2 ? 1 : 0;
         return 4;
     }
-    public int equals(bool[] modes, int op1, int op2, int op3, List<int> program)
+    public int equals(bool[] modes, int op1, int op2, int op3, int[] program)
     {
         int val1 = modes[0] ? op1 : program[op1];
         int val2 = modes[1] ? op2 : program[op2];
@@ -217,12 +284,14 @@ class Solve7 : ISolve
 
     public string SolveA()
     {
-        return SolveFor().ToString();
+        int[] boosters = { 0, 1, 2, 3, 4 };
+        return SolveFor(boosters, ComputePower).ToString();
     }
 
     public string SolveB()
     {
-        return "NOPE"; //SolveFor(5).ToString();
+        int[] boosters = { 5, 6, 7, 8, 9 };
+        return SolveFor(boosters, ComputePowerFeedback).ToString();
     }
 
     static IEnumerable<IEnumerable<T>> GetPermutations<T>(IEnumerable<T> list, int length)
@@ -233,19 +302,18 @@ class Solve7 : ISolve
                 (t1, t2) => t1.Concat(new T[] { t2 }));
     }
 
-    private int SolveFor()
+    private int SolveFor(int[] boosters, Func<int[], string, int> computer)
     {
         var lines = File.ReadAllLines(Input, Encoding.UTF8);
         var rawProgram = lines[0];
 
         var maxPower = 0;
 
-        int[] boosters = { 0, 1, 2, 3, 4 };
         var attempts = GetPermutations(boosters, 5);
 
         foreach (var attempt in attempts)
         {
-            var power = ComputePower(attempt.ToArray(), rawProgram);
+            var power = computer(attempt.ToArray(), rawProgram);
             maxPower = Math.Max(power, maxPower);
         }
 

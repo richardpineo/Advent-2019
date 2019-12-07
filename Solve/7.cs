@@ -3,7 +3,6 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
-using System.Collections;
 
 class Solve7 : ISolve
 {
@@ -45,18 +44,6 @@ class Solve7 : ISolve
         return true;
     }
 
-    private int ComputePower(int[] order, string rawProgram)
-    {
-        var power = 0;
-        foreach (var phase in order)
-        {
-            int[] inputs = { phase, power };
-
-            var program = ParseInput(rawProgram);
-            power = RunProgramSimple(program, inputs);
-        }
-        return power;
-    }
 
     private bool ProveB()
     {
@@ -82,22 +69,37 @@ class Solve7 : ISolve
         return true;
     }
 
+    private int ComputePower(int[] order, string rawProgram)
+    {
+        var power = 0;
+        foreach (var phase in order)
+        {
+            int[] inputs = { phase, power };
+
+            var program = ParseInput(rawProgram);
+
+            var inputPos = 0;
+            var state = new State { input = inputs[inputPos++], program = program.ToArray() };
+            for (; state.pos != -1; state.pos = Step(state))
+            {
+                if (!state.input.HasValue && inputPos < inputs.Length)
+                {
+                    state.input = inputs[inputPos++];
+                }
+            }
+            power = state.output ?? -1;
+        }
+        return power;
+    }
+
     private int ComputePowerFeedback(int[] order, string rawProgram)
     {
-        var programs = new List<int>[5] {
-             ParseInput(rawProgram),
-             ParseInput(rawProgram),
-             ParseInput(rawProgram),
-             ParseInput(rawProgram),
-             ParseInput(rawProgram)
-        };
-
         var states = new List<State>();
-        states.Add(new State { input = order[0], program = programs[0].ToArray() });
-        states.Add(new State { input = order[1], program = programs[1].ToArray() });
-        states.Add(new State { input = order[2], program = programs[2].ToArray() });
-        states.Add(new State { input = order[3], program = programs[3].ToArray() });
-        states.Add(new State { input = order[4], program = programs[4].ToArray() });
+        states.Add(new State { input = order[0], program = ParseInput(rawProgram).ToArray() });
+        states.Add(new State { input = order[1], program = ParseInput(rawProgram).ToArray() });
+        states.Add(new State { input = order[2], program = ParseInput(rawProgram).ToArray() });
+        states.Add(new State { input = order[3], program = ParseInput(rawProgram).ToArray() });
+        states.Add(new State { input = order[4], program = ParseInput(rawProgram).ToArray() });
 
         // Initialize
         var hasInitialized = false;
@@ -156,20 +158,6 @@ class Solve7 : ISolve
         public int? input;
         public int pos;
         public int[] program;
-    }
-
-    private int RunProgramSimple(List<int> program, int[] inputs)
-    {
-        var inputPos = 0;
-        var state = new State { input = inputs[inputPos++], program = program.ToArray() };
-        for (; state.pos != -1; state.pos = Step(state))
-        {
-            if (!state.input.HasValue && inputPos < inputs.Length)
-            {
-                state.input = inputs[inputPos++];
-            }
-        }
-        return state.output ?? -1;
     }
 
     private bool[] getModes(int command)
@@ -281,7 +269,6 @@ class Solve7 : ISolve
         return isA ? SolveA() : SolveB();
     }
 
-
     public string SolveA()
     {
         int[] boosters = { 0, 1, 2, 3, 4 };
@@ -294,6 +281,7 @@ class Solve7 : ISolve
         return SolveFor(boosters, ComputePowerFeedback).ToString();
     }
 
+    // https://stackoverflow.com/questions/1952153/what-is-the-best-way-to-find-all-combinations-of-items-in-an-array/10629938#10629938
     static IEnumerable<IEnumerable<T>> GetPermutations<T>(IEnumerable<T> list, int length)
     {
         if (length == 1) return list.Select(t => new T[] { t });

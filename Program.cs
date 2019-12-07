@@ -14,7 +14,8 @@ namespace AOC2019
                 new Solve3(),
                 new Solve4(),
                 new Solve5(),
-                new Solve6()
+                new Solve6(),
+                new Solve7()
             };
 
             foreach (var solve in toSolve)

@@ -3,8 +3,8 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
-
-using Layer = System.Collections.Generic.List<string>;
+using Row = System.Collections.Generic.List<int>;
+using Layer = System.Collections.Generic.List<System.Collections.Generic.List<int>>;
 
 class Solve8 : ISolve
 {
@@ -27,12 +27,18 @@ class Solve8 : ISolve
         var width = 3;
         var height = 2;
         var layers = MakeLayers(image, width, height);
-        // DumpLayers(layers);
+        DumpLayers(layers);
         return true;
     }
 
     public bool ProveB()
     {
+        var image = "0222112222120000";
+        var width = 2;
+        var height = 2;
+        var layers = MakeLayers(image, width, height);
+        var final = Combine(layers, width, height);
+        DumpLayer(final, "Image: ");
         return false;
     }
 
@@ -66,6 +72,24 @@ class Solve8 : ISolve
         // return Solve();
     }
 
+    private Layer Combine(List<Layer> layers, int width, int height)
+    {
+        var final = new Layer();
+        for (var h = 0; h < height; h++)
+        {
+            final.Add(new Row());
+            var value = 0;
+            for (var w = 0; w < width; w++)
+            {
+                for (int i = 0; i < layers.Count; i++)
+                {
+                }
+                final[h].Add(value);
+            }
+        }
+        return final;
+    }
+
     private List<Layer> MakeLayers(string image, int width, int height)
     {
         var pixels = image.ToCharArray();
@@ -75,13 +99,13 @@ class Solve8 : ISolve
             var newLayer = new Layer();
             for (var h = 0; h < height; h++)
             {
-                var line = new StringBuilder();
+                var line = new Row();
                 for (var w = 0; w < width; w++)
                 {
-                    line.Append(pixels[startIndex + h * width + w]);
-
+                    var value = pixels[startIndex + h * width + w];
+                    line.Add(value - '0');
                 }
-                newLayer.Add(line.ToString());
+                newLayer.Add(line);
             }
             layers.Add(newLayer);
         }
@@ -94,21 +118,26 @@ class Solve8 : ISolve
         for (int i = 0; i < layers.Count; i++)
         {
             var header = $"Layer {i + 1}: ";
-            for (int j = 0; j < layers[i].Count; j++)
-            {
-                Console.Write("".PadLeft(8));
-                if (j > 0)
-                {
-                    Console.Write(String.Format("".PadLeft(header.Length)));
-                }
-                else
-                {
-                    Console.Write(header);
-                }
+            DumpLayer(layers[i], header);
+        }
+    }
 
-                Console.WriteLine(layers[i][j]);
+    private void DumpLayer(Layer layer, string header)
+    {
+        Console.WriteLine();
+        for (int j = 0; j < layer.Count; j++)
+        {
+            Console.Write("".PadLeft(8));
+            if (j > 0)
+            {
+                Console.Write(String.Format("".PadLeft(header.Length)));
             }
-            Console.WriteLine();
+            else
+            {
+                Console.Write(header);
+            }
+
+            Console.WriteLine(string.Join("", layer[j]));
         }
     }
 }

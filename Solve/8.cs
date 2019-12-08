@@ -27,7 +27,7 @@ class Solve8 : ISolve
         var width = 3;
         var height = 2;
         var layers = MakeLayers(image, width, height);
-        DumpLayers(layers);
+        // DumpLayers(layers);
         return true;
     }
 
@@ -38,8 +38,8 @@ class Solve8 : ISolve
         var height = 2;
         var layers = MakeLayers(image, width, height);
         var final = Combine(layers, width, height);
-        DumpLayer(final, "Image: ");
-        return false;
+        // DumpLayer(final, "Image: ");
+        return true;
     }
 
     public string Solve(bool isA)
@@ -78,11 +78,15 @@ class Solve8 : ISolve
         for (var h = 0; h < height; h++)
         {
             final.Add(new Row());
-            var value = 0;
             for (var w = 0; w < width; w++)
             {
+                var value = 2;
                 for (int i = 0; i < layers.Count; i++)
                 {
+                    if (value == 2)
+                    {
+                        value = layers[i][h][w];
+                    }
                 }
                 final[h].Add(value);
             }

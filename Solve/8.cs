@@ -134,7 +134,6 @@ class Solve8 : ISolve
 
     private void DumpLayer(Layer layer, string header)
     {
-        Console.WriteLine();
         for (int j = 0; j < layer.Count; j++)
         {
             Console.Write("".PadLeft(8));

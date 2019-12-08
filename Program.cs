@@ -8,7 +8,7 @@ namespace AOC2019
     {
         static void Main(string[] args)
         {
-            ISolve[] toSolve = {
+            ISolve[] all = {
                 new Solve1(),
                 new Solve2(),
                 new Solve3(),
@@ -19,6 +19,18 @@ namespace AOC2019
                 new Solve8()
             };
 
+            ISolve[] toSolve;
+            if (args.Length > 0 && args[0] == "last")
+            {
+                toSolve = new ISolve[] { all[all.Length - 1] };
+            }
+            else
+            {
+                toSolve = all;
+            }
+
+            var timeForAll = new Stopwatch();
+            timeForAll.Start();
             foreach (var solve in toSolve)
             {
                 var stopwatch = new Stopwatch();
@@ -32,6 +44,9 @@ namespace AOC2019
                 Console.WriteLine($"    {stopwatch.ElapsedMilliseconds} ms");
                 Console.WriteLine();
             }
+
+            Console.WriteLine($"Total Time: {timeForAll.ElapsedMilliseconds} ms");
+            Console.WriteLine();
         }
 
         static bool SolveOne(ISolve solve, bool isA)

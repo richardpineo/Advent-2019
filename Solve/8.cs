@@ -14,7 +14,6 @@ class Solve8 : ISolve
     }
 
     const string Input = "Input//8.txt";
-    const string ExampleB = "Examples//1b.txt";
 
     public bool Prove(bool isA)
     {
@@ -55,21 +54,28 @@ class Solve8 : ISolve
         var layers = MakeLayers(lines[0], width, height);
         // DumpLayers(layers);
 
-        var least = layers.OrderBy(l => CharCount(l, '0')).First();
+        var least = layers.OrderBy(l => ValueCount(l, 0)).First();
 
-        var answer = CharCount(least, '1') * CharCount(least, '2');
+        var answer = ValueCount(least, 1) * ValueCount(least, 2);
         return answer.ToString();
     }
 
-    private int CharCount(Layer l, char c)
+    private int ValueCount(Layer l, int c)
     {
         return l.Sum(l => l.Count(f => f == c));
     }
 
     public string SolveB()
     {
-        return "NOTIMPL";
-        // return Solve();
+        string[] lines = File.ReadAllLines(Input, Encoding.UTF8);
+        var width = 25;
+        var height = 6;
+        var layers = MakeLayers(lines[0], width, height);
+        var final = Combine(layers, width, height);
+
+        DumpLayer(final, "Image: ");
+
+        return "MANUAL";
     }
 
     private Layer Combine(List<Layer> layers, int width, int height)
@@ -141,7 +147,9 @@ class Solve8 : ISolve
                 Console.Write(header);
             }
 
-            Console.WriteLine(string.Join("", layer[j]));
+            var display = layer[j].Select(c => c == 1 ? "*" : " ");
+            var raw = string.Join("", display);
+            Console.WriteLine(raw);
         }
     }
 }

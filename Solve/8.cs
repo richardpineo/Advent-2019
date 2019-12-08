@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Collections.Generic;
+using System.Linq;
 
 using Layer = System.Collections.Generic.List<string>;
 
@@ -23,9 +24,51 @@ class Solve8 : ISolve
     private bool ProveA()
     {
         var image = "123456789012";
-        var pixels = image.ToCharArray();
         var width = 3;
         var height = 2;
+        var layers = MakeLayers(image, width, height);
+        // DumpLayers(layers);
+        return true;
+    }
+
+    public bool ProveB()
+    {
+        return false;
+    }
+
+    public string Solve(bool isA)
+    {
+        return isA ? SolveA() : SolveB();
+    }
+
+    public string SolveA()
+    {
+        string[] lines = File.ReadAllLines(Input, Encoding.UTF8);
+        var width = 25;
+        var height = 6;
+        var layers = MakeLayers(lines[0], width, height);
+        // DumpLayers(layers);
+
+        var least = layers.OrderBy(l => CharCount(l, '0')).First();
+
+        var answer = CharCount(least, '1') * CharCount(least, '2');
+        return answer.ToString();
+    }
+
+    private int CharCount(Layer l, char c)
+    {
+        return l.Sum(l => l.Count(f => f == c));
+    }
+
+    public string SolveB()
+    {
+        return "NOTIMPL";
+        // return Solve();
+    }
+
+    private List<Layer> MakeLayers(string image, int width, int height)
+    {
+        var pixels = image.ToCharArray();
         var layers = new List<Layer>();
         for (var startIndex = 0; startIndex < pixels.Length; startIndex = layers.Count * width * height)
         {
@@ -42,7 +85,11 @@ class Solve8 : ISolve
             }
             layers.Add(newLayer);
         }
+        return layers;
+    }
 
+    private void DumpLayers(List<Layer> layers)
+    {
         Console.WriteLine();
         for (int i = 0; i < layers.Count; i++)
         {
@@ -63,29 +110,5 @@ class Solve8 : ISolve
             }
             Console.WriteLine();
         }
-
-        return true;
-    }
-
-    public bool ProveB()
-    {
-        return false;
-    }
-
-    public string Solve(bool isA)
-    {
-        return isA ? SolveA() : SolveB();
-    }
-
-    public string SolveA()
-    {
-        return "NOTIMPL";
-        //   return Solve();
-    }
-
-    public string SolveB()
-    {
-        return "NOTIMPL";
-        // return Solve();
     }
 }

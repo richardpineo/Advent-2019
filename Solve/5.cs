@@ -27,8 +27,8 @@ class Solve5 : ISolve
         {
             var inOut = line.Split(" ");
 
-            var start = ParseInput(inOut[0]);
-            var end = ParseInput(inOut[1]);
+            var start = Intcode.ParseInput(inOut[0]);
+            var end = Intcode.ParseInput(inOut[1]);
             var output = RunProgram(start, 1);
             var expected = string.Join(",", end);
             var actual = string.Join(",", start);
@@ -58,7 +58,7 @@ class Solve5 : ISolve
             var inputs = line.Split(" ");
             var input = int.Parse(inputs[0]);
             var expected = int.Parse(inputs[1]);
-            var program = ParseInput(inputs[2]);
+            var program = Intcode.ParseInput(inputs[2]);
             var output = RunProgram(program, input);
             if (output != expected)
             {
@@ -74,118 +74,23 @@ class Solve5 : ISolve
         return true;
     }
 
-    private List<int> ParseInput(string input)
+    private int? RunProgram(int[] program, int input)
     {
-        var list = new List<int>();
-        var inputs = input.Split(",");
-        foreach (var i in inputs)
+        var finalOutput = -1;
+        var state = new Intcode.State { program = program, input = input };
+        while (Intcode.Step(state))
         {
-            list.Add(int.Parse(i));
+            // nothing
+            // consume the output
+            if (state.output.HasValue)
+            {
+                finalOutput = state.output.Value;
+                state.output = null;
+            }
         }
-        return list;
+        return finalOutput;
     }
 
-    private int RunProgram(List<int> program, int input)
-    {
-        int output = 666;
-        for (int pos = 0; pos != -1; pos = Step(program, pos, input, ref output))
-        { }
-        return output;
-    }
-
-    private bool[] getModes(int command)
-    {
-        var numArgs = 10; // max of 10 args.
-        var bitfield = command / 100;
-        var modes = new bool[numArgs];
-        for (int i = 0; i < numArgs; i++)
-        {
-            modes[i] = 0 != bitfield % 2;
-            bitfield = bitfield / 10;
-        }
-        return modes;
-    }
-
-    private int Step(List<int> program, int pos, int input, ref int output)
-    {
-        int command = program[pos];
-        int opCode = command % 100;
-        var modes = getModes(command);
-
-        switch (opCode)
-        {
-            case 1:
-                return pos + add(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
-            case 2:
-                return pos + multiply(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
-            case 3:
-                return pos + read(program[pos + 1], input, program);
-            case 4:
-                return pos + write(modes, program[pos + 1], program, ref output);
-            case 5:
-                return jumpTrue(modes, pos, program[pos + 1], program[pos + 2], program);
-            case 6:
-                return jumpFalse(modes, pos, program[pos + 1], program[pos + 2], program);
-            case 7:
-                return pos + lessThan(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
-            case 8:
-                return pos + equals(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
-            case 99:
-                return -1;
-        }
-        throw new Exception("opcode is out of range");
-    }
-
-    public int add(bool[] modes, int op1, int op2, int op3, List<int> program)
-    {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
-        program[op3] = val1 + val2;
-        return 4;
-    }
-    public int multiply(bool[] modes, int op1, int op2, int op3, List<int> program)
-    {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
-        program[op3] = val1 * val2;
-        return 4;
-    }
-    public int read(int op1, int input, List<int> program)
-    {
-        program[op1] = input;
-        return 2;
-    }
-    public int write(bool[] modes, int op1, List<int> program, ref int output)
-    {
-        output = modes[0] ? op1 : program[op1]; ;
-        return 2;
-    }
-    public int jumpTrue(bool[] modes, int pos, int op1, int op2, List<int> program)
-    {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
-        return val1 != 0 ? val2 : (pos + 3);
-    }
-    public int jumpFalse(bool[] modes, int pos, int op1, int op2, List<int> program)
-    {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
-        return val1 == 0 ? val2 : (pos + 3);
-    }
-    public int lessThan(bool[] modes, int op1, int op2, int op3, List<int> program)
-    {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
-        program[op3] = val1 < val2 ? 1 : 0;
-        return 4;
-    }
-    public int equals(bool[] modes, int op1, int op2, int op3, List<int> program)
-    {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
-        program[op3] = val1 == val2 ? 1 : 0;
-        return 4;
-    }
     public string Solve(bool isA)
     {
         return isA ? SolveA() : SolveB();
@@ -203,7 +108,7 @@ class Solve5 : ISolve
     private int SolveFor(int input)
     {
         var lines = File.ReadAllLines(Input, Encoding.UTF8);
-        var start = ParseInput(lines[0]);
-        return RunProgram(start, input);
+        var start = Intcode.ParseInput(lines[0]);
+        return RunProgram(start, input).Value;
     }
 }

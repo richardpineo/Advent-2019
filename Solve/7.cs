@@ -76,11 +76,11 @@ class Solve7 : ISolve
         {
             int[] inputs = { phase, power };
 
-            var program = ParseInput(rawProgram);
+            var program = Intcode.ParseInput(rawProgram);
 
             var inputPos = 0;
-            var state = new State { input = inputs[inputPos++], program = program.ToArray() };
-            for (; state.pos != -1; state.pos = Step(state))
+            var state = new Intcode.State { input = inputs[inputPos++], program = program.ToArray() };
+            while (Intcode.Step(state))
             {
                 if (!state.input.HasValue && inputPos < inputs.Length)
                 {
@@ -94,12 +94,12 @@ class Solve7 : ISolve
 
     private int ComputePowerFeedback(int[] order, string rawProgram)
     {
-        var states = new List<State>();
-        states.Add(new State { input = order[0], program = ParseInput(rawProgram).ToArray() });
-        states.Add(new State { input = order[1], program = ParseInput(rawProgram).ToArray() });
-        states.Add(new State { input = order[2], program = ParseInput(rawProgram).ToArray() });
-        states.Add(new State { input = order[3], program = ParseInput(rawProgram).ToArray() });
-        states.Add(new State { input = order[4], program = ParseInput(rawProgram).ToArray() });
+        var states = new List<Intcode.State>();
+        states.Add(new Intcode.State { input = order[0], program = Intcode.ParseInput(rawProgram).ToArray() });
+        states.Add(new Intcode.State { input = order[1], program = Intcode.ParseInput(rawProgram).ToArray() });
+        states.Add(new Intcode.State { input = order[2], program = Intcode.ParseInput(rawProgram).ToArray() });
+        states.Add(new Intcode.State { input = order[3], program = Intcode.ParseInput(rawProgram).ToArray() });
+        states.Add(new Intcode.State { input = order[4], program = Intcode.ParseInput(rawProgram).ToArray() });
 
         // Initialize
         var hasInitialized = false;
@@ -116,7 +116,7 @@ class Solve7 : ISolve
 
                 if (states[i].pos != -1)
                 {
-                    states[i].pos = Step(states[i]);
+                    Intcode.Step(states[i]);
                 }
                 else if (i == 4)
                 {
@@ -141,25 +141,6 @@ class Solve7 : ISolve
         }
     }
 
-    private List<int> ParseInput(string input)
-    {
-        var list = new List<int>();
-        var inputs = input.Split(",");
-        foreach (var i in inputs)
-        {
-            list.Add(int.Parse(i));
-        }
-        return list;
-    }
-
-    class State
-    {
-        public int? output;
-        public int? input;
-        public int pos;
-        public int[] program;
-    }
-
     private bool[] getModes(int command)
     {
         var numArgs = 10; // max of 10 args.
@@ -173,97 +154,6 @@ class Solve7 : ISolve
         return modes;
     }
 
-    private int Step(State state)
-    {
-        ref int pos = ref state.pos;
-        var program = state.program;
-        int command = program[pos];
-        int opCode = command % 100;
-        var modes = getModes(command);
-
-        switch (opCode)
-        {
-            case 1:
-                return pos + add(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
-            case 2:
-                return pos + multiply(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
-            case 3:
-                return pos + read(program[pos + 1], ref state.input, program);
-            case 4:
-                return pos + write(modes, program[pos + 1], program, ref state.output);
-            case 5:
-                return jumpTrue(modes, pos, program[pos + 1], program[pos + 2], program);
-            case 6:
-                return jumpFalse(modes, pos, program[pos + 1], program[pos + 2], program);
-            case 7:
-                return pos + lessThan(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
-            case 8:
-                return pos + equals(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
-            case 99:
-                return -1;
-        }
-        throw new Exception("opcode is out of range");
-    }
-
-    public int add(bool[] modes, int op1, int op2, int op3, int[] program)
-    {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
-        program[op3] = val1 + val2;
-        return 4;
-    }
-    public int multiply(bool[] modes, int op1, int op2, int op3, int[] program)
-    {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
-        program[op3] = val1 * val2;
-        return 4;
-    }
-    public int read(int op1, ref int? input, int[] program)
-    {
-        if (!input.HasValue)
-        {
-            return 0;
-        }
-        program[op1] = input.Value;
-        input = null;
-        return 2;
-    }
-    public int write(bool[] modes, int op1, int[] program, ref int? output)
-    {
-        if (output.HasValue)
-        {
-            return 0;
-        }
-        output = modes[0] ? op1 : program[op1]; ;
-        return 2;
-    }
-    public int jumpTrue(bool[] modes, int pos, int op1, int op2, int[] program)
-    {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
-        return val1 != 0 ? val2 : (pos + 3);
-    }
-    public int jumpFalse(bool[] modes, int pos, int op1, int op2, int[] program)
-    {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
-        return val1 == 0 ? val2 : (pos + 3);
-    }
-    public int lessThan(bool[] modes, int op1, int op2, int op3, int[] program)
-    {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
-        program[op3] = val1 < val2 ? 1 : 0;
-        return 4;
-    }
-    public int equals(bool[] modes, int op1, int op2, int op3, int[] program)
-    {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
-        program[op3] = val1 == val2 ? 1 : 0;
-        return 4;
-    }
     public string Solve(bool isA)
     {
         return isA ? SolveA() : SolveB();

@@ -26,8 +26,8 @@ class Solve2 : ISolve
         {
             var inOut = line.Split(" ");
 
-            var start = ParseInput(inOut[0]);
-            var end = ParseInput(inOut[1]);
+            var start = Intcode.ParseInput(inOut[0]);
+            var end = Intcode.ParseInput(inOut[1]);
             RunProgram(start);
             var expected = string.Join(",", end);
             var actual = string.Join(",", start);
@@ -49,39 +49,13 @@ class Solve2 : ISolve
         return true;
     }
 
-    private List<int> ParseInput(string input)
+    private void RunProgram(int[] program)
     {
-        var list = new List<int>();
-        var inputs = input.Split(",");
-        foreach (var i in inputs)
-        {
-            list.Add(int.Parse(i));
-        }
-        return list;
-    }
-
-    private void RunProgram(List<int> program)
-    {
-        for (int pos = 0; pos != -1; pos = Step(program, pos))
+        var state = new Intcode.State { program = program };
+        while (Intcode.Step(state))
         {
             // nothing
         }
-    }
-
-    private int Step(List<int> program, int pos)
-    {
-        int command = program[pos];
-        if (command == 99)
-        {
-            return -1;
-        }
-
-        int arg1 = program[program[pos + 1]];
-        int arg2 = program[program[pos + 2]];
-        int outPos = program[pos + 3];
-        int val = (command == 1) ? (arg1 + arg2) : (arg1 * arg2);
-        program[outPos] = val;
-        return pos + 4;
     }
 
     public string Solve(bool isA)
@@ -97,7 +71,7 @@ class Solve2 : ISolve
     private int SolveFor(int noun, int verb)
     {
         string[] lines = File.ReadAllLines(Input, Encoding.UTF8);
-        var program = ParseInput(lines[0]);
+        var program = Intcode.ParseInput(lines[0]);
 
         program[1] = noun;
         program[2] = verb;

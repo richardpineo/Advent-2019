@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 // https://adventofcode.com/
 namespace AOC2019
@@ -29,6 +30,7 @@ namespace AOC2019
                 toSolve = all;
             }
 
+            var failed = new List<ISolve>();
             var timeForAll = new Stopwatch();
             timeForAll.Start();
             foreach (var solve in toSolve)
@@ -41,12 +43,23 @@ namespace AOC2019
                 {
                     Console.WriteLine("Success!");
                 }
+                else
+                {
+                    failed.Add(solve);
+                }
                 Console.WriteLine($"    {stopwatch.ElapsedMilliseconds} ms");
                 Console.WriteLine();
             }
 
             Console.WriteLine($"Total Time: {timeForAll.ElapsedMilliseconds} ms");
             Console.WriteLine();
+
+            if (failed.Count > 0)
+            {
+                Console.WriteLine();
+                Console.WriteLine(" FAILURES DETECTED:");
+                failed.ForEach(f => Console.WriteLine($"   {f.Description()}"));
+            }
         }
 
         static bool SolveOne(ISolve solve, bool isA)

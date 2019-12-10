@@ -11,7 +11,7 @@
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/bin/Debug/netcoreapp3.0/AOC2019.dll",
             "args": [
-                "last"
+                // "last"
             ],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",

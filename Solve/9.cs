@@ -80,14 +80,13 @@ class Solve9 : ISolve
 
     public string Solve(bool isA)
     {
-        return isA ? SolveA() : SolveB();
+        return isA ? SolveFor(1) : SolveFor(2);
     }
 
-    public string SolveA()
+    public string SolveFor(int input)
     {
         var lines = File.ReadAllLines(Input, Encoding.UTF8);
         var program = Intcode.ParseInput(lines[0]);
-        var input = 1;
         var state = new Intcode.State(program, input);
         var outputs = new List<IntType>();
         while (Intcode.Step(state))
@@ -110,10 +109,5 @@ class Solve9 : ISolve
         // FAILED
         Console.WriteLine(string.Join(",", outputs));
         throw new Exception("Day 9, Solve A failed");
-    }
-
-    public string SolveB()
-    {
-        return "NOTIMPL";
     }
 }

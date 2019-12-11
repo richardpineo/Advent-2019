@@ -73,7 +73,7 @@ class Solve8 : ISolve
         var layers = MakeLayers(lines[0], width, height);
         var final = Combine(layers, width, height);
 
-        DumpLayer(final, "Image: ");
+        DumpLayer(final, "");
 
         return "MANUAL";
     }

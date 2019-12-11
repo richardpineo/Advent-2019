@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Text;
 using System.Collections.Generic;
 using IntType = System.Int64;
 
@@ -83,7 +85,31 @@ class Solve9 : ISolve
 
     public string SolveA()
     {
-        return "NOTIMPL";
+        var lines = File.ReadAllLines(Input, Encoding.UTF8);
+        var program = Intcode.ParseInput(lines[0]);
+        var input = 1;
+        var state = new Intcode.State(program, input);
+        var outputs = new List<IntType>();
+        while (Intcode.Step(state))
+        {
+            if (state.output.HasValue)
+            {
+                var output = state.PopOutput();
+                if (output.HasValue)
+                {
+                    outputs.Add(output.Value);
+                }
+            }
+        }
+
+        if (outputs.Count == 1)
+        {
+            return outputs[0].ToString();
+        }
+
+        // FAILED
+        Console.WriteLine(string.Join(",", outputs));
+        throw new Exception("Day 9, Solve A failed");
     }
 
     public string SolveB()

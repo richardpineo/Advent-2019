@@ -63,8 +63,8 @@ class Intcode
 
     private enum Mode
     {
-        Immediate,
         Position,
+        Immediate,
         Relative
     }
 
@@ -79,10 +79,10 @@ class Intcode
             switch (bitfield % 10)
             {
                 case 0:
-                    mode = Mode.Immediate;
+                    mode = Mode.Position;
                     break;
                 case 1:
-                    mode = Mode.Position;
+                    mode = Mode.Immediate;
                     break;
                 case 2:
                     mode = Mode.Relative;
@@ -143,42 +143,47 @@ class Intcode
     {
         switch (mode)
         {
-            case Mode.Immediate:
-                return state.getAt(op);
             case Mode.Position:
+                return state.getAt(op);
+            case Mode.Immediate:
                 return op;
             case Mode.Relative:
                 return state.getAt(state.relativeBase + op);
         }
         throw new Exception("Bad mode: " + mode.ToString());
     }
+
     private static IntType valueAt(Mode[] modes, State state, IntType index)
     {
         return getValue(modes[index], state.getAt(state.pos + index + 1), state);
     }
-    private static void writeTo(State state, IntType index, IntType value)
+    private static void writeTo(Mode[] modes, State state, IntType index, IntType value)
     {
-        IntType offset = state.pos + index + 1;
-        IntType writeOffset = state.getAt(offset);
-        state.setAt(writeOffset, value);
+        IntType op = state.pos + index + 1;
+        var pos = state.getAt(op);
+        if (modes[index] == Mode.Relative)
+        {
+            pos += state.relativeBase;
+        }
+        state.setAt(pos, value);
     }
     static void add(Mode[] modes, State state)
     {
         IntType sum = valueAt(modes, state, 0) + valueAt(modes, state, 1);
-        writeTo(state, 2, sum);
+        writeTo(modes, state, 2, sum);
         state.pos += 4;
     }
     static void multiply(Mode[] modes, State state)
     {
         IntType product = valueAt(modes, state, 0) * valueAt(modes, state, 1);
-        writeTo(state, 2, product);
+        writeTo(modes, state, 2, product);
         state.pos += 4;
     }
     static void read(Mode[] modes, State state)
     {
         if (state.input.HasValue)
         {
-            writeTo(state, 0, state.input.Value);
+            writeTo(modes, state, 0, state.input.Value);
             state.input = null;
             state.pos += 2;
         }
@@ -207,14 +212,14 @@ class Intcode
     {
         IntType val1 = valueAt(modes, state, 0);
         IntType val2 = valueAt(modes, state, 1);
-        writeTo(state, 2, val1 < val2 ? 1 : 0);
+        writeTo(modes, state, 2, val1 < val2 ? 1 : 0);
         state.pos += 4;
     }
     static void equals(Mode[] modes, State state)
     {
         IntType val1 = valueAt(modes, state, 0);
         IntType val2 = valueAt(modes, state, 1);
-        writeTo(state, 2, val1 == val2 ? 1 : 0);
+        writeTo(modes, state, 2, val1 == val2 ? 1 : 0);
         state.pos += 4;
     }
 

@@ -35,7 +35,14 @@ class Solve9 : ISolve
     }
     private bool ProveA3()
     {
-        return true;
+        var input = "104,1125899906842624,99";
+        var program = Intcode.ParseInput(input);
+        var state = new Intcode.State(program);
+        while (Intcode.Step(state))
+        {
+            // nothing
+        }
+        return state.output == 1125899906842624;
     }
 
     public bool ProveB()

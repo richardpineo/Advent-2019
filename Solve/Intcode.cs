@@ -1,53 +1,51 @@
 using System;
-using System.IO;
-using System.Text;
 using System.Collections.Generic;
-using System.Linq;
+using IntType = System.Int64;
 
 class Intcode
 {
-    public static int[] ParseInput(string input)
+    public static IntType[] ParseInput(string input)
     {
-        var list = new List<int>();
+        var list = new List<IntType>();
         var inputs = input.Split(",");
         foreach (var i in inputs)
         {
-            list.Add(int.Parse(i));
+            list.Add(IntType.Parse(i));
         }
         return list.ToArray();
     }
 
     public class State
     {
-        public State(int[] program, int? initialInput = null)
+        public State(IntType[] program, IntType? initialInput = null)
         {
-            for (int i = 0; i < program.Length; i++)
+            for (IntType i = 0; i < program.Length; i++)
             {
                 setAt(i, program[i]);
             }
             this.input = initialInput;
         }
-        public int? output;
-        public int? input;
-        public int pos = 0;
-        private Dictionary<int, int> memory = new Dictionary<int, int>();
-        public int relative;
+        public IntType? output;
+        public IntType? input;
+        public IntType pos = 0;
+        private Dictionary<IntType, IntType> memory = new Dictionary<IntType, IntType>();
+        public IntType relative;
 
-        public int[] MemoryDump(int maxAddress)
+        public IntType[] MemoryDump(IntType maxAddress)
         {
-            var dump = new int[maxAddress];
-            for (int i = 0; i < maxAddress; i++)
+            var dump = new IntType[maxAddress];
+            for (IntType i = 0; i < maxAddress; i++)
             {
                 dump[i] = getAt(i);
             }
             return dump;
         }
 
-        public int getAt(int index)
+        public IntType getAt(IntType index)
         {
             return memory.GetValueOrDefault(index);
         }
-        public void setAt(int index, int value)
+        public void setAt(IntType index, IntType value)
         {
             memory[index] = value;
         }
@@ -60,12 +58,12 @@ class Intcode
         Relative
     }
 
-    private static Mode[] getModes(int command)
+    private static Mode[] getModes(IntType command)
     {
         var numArgs = 4; // max of 4 args.
         var bitfield = command / 100;
         var modes = new Mode[numArgs];
-        for (int i = 0; i < numArgs; i++)
+        for (IntType i = 0; i < numArgs; i++)
         {
             Mode mode;
             switch (bitfield % 10)
@@ -91,8 +89,8 @@ class Intcode
 
     public static bool Step(State state)
     {
-        int command = state.getAt(state.pos);
-        int opCode = command % 100;
+        IntType command = state.getAt(state.pos);
+        IntType opCode = command % 100;
         var modes = getModes(command);
 
         switch (opCode)
@@ -131,7 +129,7 @@ class Intcode
         throw new Exception("opcode is out of range");
     }
 
-    private static int getValue(Mode mode, int op, State state)
+    private static IntType getValue(Mode mode, IntType op, State state)
     {
         switch (mode)
         {
@@ -146,25 +144,25 @@ class Intcode
         }
         throw new Exception("Bad mode: " + mode.ToString());
     }
-    private static int valueAt(Mode[] modes, State state, int index)
+    private static IntType valueAt(Mode[] modes, State state, IntType index)
     {
         return getValue(modes[index], state.getAt(state.pos + index + 1), state);
     }
-    private static void writeTo(State state, int index, int value)
+    private static void writeTo(State state, IntType index, IntType value)
     {
-        int offset = state.pos + index + 1;
-        int writeOffset = state.getAt(offset);
+        IntType offset = state.pos + index + 1;
+        IntType writeOffset = state.getAt(offset);
         state.setAt(writeOffset, value);
     }
     static void add(Mode[] modes, State state)
     {
-        int sum = valueAt(modes, state, 0) + valueAt(modes, state, 1);
+        IntType sum = valueAt(modes, state, 0) + valueAt(modes, state, 1);
         writeTo(state, 2, sum);
         state.pos += 4;
     }
     static void multiply(Mode[] modes, State state)
     {
-        int product = valueAt(modes, state, 0) * valueAt(modes, state, 1);
+        IntType product = valueAt(modes, state, 0) * valueAt(modes, state, 1);
         writeTo(state, 2, product);
         state.pos += 4;
     }
@@ -187,27 +185,27 @@ class Intcode
     }
     static void jumpTrue(Mode[] modes, State state)
     {
-        int val1 = valueAt(modes, state, 0);
-        int val2 = valueAt(modes, state, 1);
+        IntType val1 = valueAt(modes, state, 0);
+        IntType val2 = valueAt(modes, state, 1);
         state.pos = val1 != 0 ? val2 : (state.pos + 3);
     }
     static void jumpFalse(Mode[] modes, State state)
     {
-        int val1 = valueAt(modes, state, 0);
-        int val2 = valueAt(modes, state, 1);
+        IntType val1 = valueAt(modes, state, 0);
+        IntType val2 = valueAt(modes, state, 1);
         state.pos = val1 == 0 ? val2 : (state.pos + 3);
     }
     static void lessThan(Mode[] modes, State state)
     {
-        int val1 = valueAt(modes, state, 0);
-        int val2 = valueAt(modes, state, 1);
+        IntType val1 = valueAt(modes, state, 0);
+        IntType val2 = valueAt(modes, state, 1);
         writeTo(state, 2, val1 < val2 ? 1 : 0);
         state.pos += 4;
     }
     static void equals(Mode[] modes, State state)
     {
-        int val1 = valueAt(modes, state, 0);
-        int val2 = valueAt(modes, state, 1);
+        IntType val1 = valueAt(modes, state, 0);
+        IntType val2 = valueAt(modes, state, 1);
         writeTo(state, 2, val1 == val2 ? 1 : 0);
         state.pos += 4;
     }

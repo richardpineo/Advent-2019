@@ -3,6 +3,8 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using IntType = System.Int64;
+
 
 class Solve7 : ISolve
 {
@@ -27,10 +29,10 @@ class Solve7 : ISolve
         {
             var tokens = line.Split(" ");
 
-            var answer = int.Parse(tokens[0]);
+            var answer = IntType.Parse(tokens[0]);
 
-            // Array of 5 int
-            var order = tokens[1].Split(",").Select(t => int.Parse(t));
+            // Array of 5 IntType
+            var order = tokens[1].Split(",").Select(t => IntType.Parse(t));
 
             var power = ComputePower(order.ToArray(), tokens[2]);
 
@@ -52,10 +54,10 @@ class Solve7 : ISolve
         {
             var tokens = line.Split(" ");
 
-            var answer = int.Parse(tokens[0]);
+            var answer = IntType.Parse(tokens[0]);
 
-            // Array of 5 int
-            var order = tokens[1].Split(",").Select(t => int.Parse(t));
+            // Array of 5 IntType
+            var order = tokens[1].Split(",").Select(t => IntType.Parse(t));
 
             var power = ComputePowerFeedback(order.ToArray(), tokens[2]);
 
@@ -69,12 +71,12 @@ class Solve7 : ISolve
         return true;
     }
 
-    private int ComputePower(int[] order, string rawProgram)
+    private IntType ComputePower(IntType[] order, string rawProgram)
     {
-        var power = 0;
+        IntType power = 0;
         foreach (var phase in order)
         {
-            int[] inputs = { phase, power };
+            IntType[] inputs = { phase, power };
 
             var program = Intcode.ParseInput(rawProgram);
 
@@ -92,7 +94,7 @@ class Solve7 : ISolve
         return power;
     }
 
-    private int ComputePowerFeedback(int[] order, string rawProgram)
+    private IntType ComputePowerFeedback(IntType[] order, string rawProgram)
     {
         var states = new List<Intcode.State>();
         states.Add(new Intcode.State(Intcode.ParseInput(rawProgram).ToArray(), order[0]));
@@ -141,12 +143,12 @@ class Solve7 : ISolve
         }
     }
 
-    private bool[] getModes(int command)
+    private bool[] getModes(IntType command)
     {
         var numArgs = 10; // max of 10 args.
         var bitfield = command / 100;
         var modes = new bool[numArgs];
-        for (int i = 0; i < numArgs; i++)
+        for (IntType i = 0; i < numArgs; i++)
         {
             modes[i] = 0 != bitfield % 2;
             bitfield = bitfield / 10;
@@ -161,18 +163,18 @@ class Solve7 : ISolve
 
     public string SolveA()
     {
-        int[] boosters = { 0, 1, 2, 3, 4 };
+        IntType[] boosters = { 0, 1, 2, 3, 4 };
         return SolveFor(boosters, ComputePower).ToString();
     }
 
     public string SolveB()
     {
-        int[] boosters = { 5, 6, 7, 8, 9 };
+        IntType[] boosters = { 5, 6, 7, 8, 9 };
         return SolveFor(boosters, ComputePowerFeedback).ToString();
     }
 
     // https://stackoverflow.com/questions/1952153/what-is-the-best-way-to-find-all-combinations-of-items-in-an-array/10629938#10629938
-    static IEnumerable<IEnumerable<T>> GetPermutations<T>(IEnumerable<T> list, int length)
+    static IEnumerable<IEnumerable<T>> GetPermutations<T>(IEnumerable<T> list, IntType length)
     {
         if (length == 1) return list.Select(t => new T[] { t });
         return GetPermutations(list, length - 1)
@@ -180,12 +182,12 @@ class Solve7 : ISolve
                 (t1, t2) => t1.Concat(new T[] { t2 }));
     }
 
-    private int SolveFor(int[] boosters, Func<int[], string, int> computer)
+    private IntType SolveFor(IntType[] boosters, Func<IntType[], string, IntType> computer)
     {
         var lines = File.ReadAllLines(Input, Encoding.UTF8);
         var rawProgram = lines[0];
 
-        var maxPower = 0;
+        IntType maxPower = 0;
 
         var attempts = GetPermutations(boosters, 5);
 

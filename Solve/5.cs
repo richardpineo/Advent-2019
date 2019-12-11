@@ -1,8 +1,8 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Linq;
 using System.Collections.Generic;
+using IntType = System.Int64;
 
 class Solve5 : ISolve
 {
@@ -48,7 +48,7 @@ class Solve5 : ISolve
     {
         string[] lines = File.ReadAllLines(ExampleB, Encoding.UTF8);
 
-        var tests = new Dictionary<int, int>();
+        var tests = new Dictionary<IntType, IntType>();
         tests[7] = 999;
         tests[8] = 1000;
         tests[9] = 1001;
@@ -56,8 +56,8 @@ class Solve5 : ISolve
         foreach (var line in lines)
         {
             var inputs = line.Split(" ");
-            var input = int.Parse(inputs[0]);
-            var expected = int.Parse(inputs[1]);
+            var input = IntType.Parse(inputs[0]);
+            var expected = IntType.Parse(inputs[1]);
             var program = Intcode.ParseInput(inputs[2]);
             var output = RunProgram(ref program, input);
             if (output != expected)
@@ -74,9 +74,9 @@ class Solve5 : ISolve
         return true;
     }
 
-    private int? RunProgram(ref int[] program, int input)
+    private IntType? RunProgram(ref IntType[] program, IntType input)
     {
-        var finalOutput = -1;
+        IntType finalOutput = -1;
         var state = new Intcode.State(program, input);
         while (Intcode.Step(state))
         {
@@ -106,7 +106,7 @@ class Solve5 : ISolve
     {
         return SolveFor(5).ToString();
     }
-    private int SolveFor(int input)
+    private IntType SolveFor(IntType input)
     {
         var lines = File.ReadAllLines(Input, Encoding.UTF8);
         var start = Intcode.ParseInput(lines[0]);

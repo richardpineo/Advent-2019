@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Collections.Generic;
+using IntType = System.Int64;
 
 class Solve2 : ISolve
 {
@@ -49,7 +49,7 @@ class Solve2 : ISolve
         return true;
     }
 
-    private int[] RunProgram(int[] program)
+    private IntType[] RunProgram(IntType[] program)
     {
         var state = new Intcode.State(program);
         while (Intcode.Step(state))
@@ -69,7 +69,7 @@ class Solve2 : ISolve
         return SolveFor(12, 2).ToString();
     }
 
-    private int SolveFor(int noun, int verb)
+    private IntType SolveFor(IntType noun, IntType verb)
     {
         string[] lines = File.ReadAllLines(Input, Encoding.UTF8);
         var program = Intcode.ParseInput(lines[0]);
@@ -84,9 +84,9 @@ class Solve2 : ISolve
 
     public string SolveB()
     {
-        for (int noun = 0; noun < 100; noun++)
+        for (IntType noun = 0; noun < 100; noun++)
         {
-            for (int verb = 0; verb < 100; verb++)
+            for (IntType verb = 0; verb < 100; verb++)
             {
                 var found = SolveFor(noun, verb);
                 if (found == 19690720)

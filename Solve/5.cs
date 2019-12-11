@@ -29,7 +29,7 @@ class Solve5 : ISolve
 
             var start = Intcode.ParseInput(inOut[0]);
             var end = Intcode.ParseInput(inOut[1]);
-            var output = RunProgram(start, 1);
+            var output = RunProgram(ref start, 1);
             var expected = string.Join(",", end);
             var actual = string.Join(",", start);
             if (expected != actual)
@@ -59,7 +59,7 @@ class Solve5 : ISolve
             var input = int.Parse(inputs[0]);
             var expected = int.Parse(inputs[1]);
             var program = Intcode.ParseInput(inputs[2]);
-            var output = RunProgram(program, input);
+            var output = RunProgram(ref program, input);
             if (output != expected)
             {
                 Console.WriteLine();
@@ -74,10 +74,10 @@ class Solve5 : ISolve
         return true;
     }
 
-    private int? RunProgram(int[] program, int input)
+    private int? RunProgram(ref int[] program, int input)
     {
         var finalOutput = -1;
-        var state = new Intcode.State { program = program, input = input };
+        var state = new Intcode.State(program, input);
         while (Intcode.Step(state))
         {
             // nothing
@@ -88,6 +88,7 @@ class Solve5 : ISolve
                 state.output = null;
             }
         }
+        program = state.MemoryDump(program.Length);
         return finalOutput;
     }
 
@@ -109,6 +110,6 @@ class Solve5 : ISolve
     {
         var lines = File.ReadAllLines(Input, Encoding.UTF8);
         var start = Intcode.ParseInput(lines[0]);
-        return RunProgram(start, input).Value;
+        return RunProgram(ref start, input).Value;
     }
 }

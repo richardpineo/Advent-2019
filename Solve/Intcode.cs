@@ -19,11 +19,38 @@ class Intcode
 
     public class State
     {
+        public State(int[] program, int? initialInput = null)
+        {
+            for (int i = 0; i < program.Length; i++)
+            {
+                setAt(i, program[i]);
+            }
+            this.input = initialInput;
+        }
         public int? output;
         public int? input;
         public int pos = 0;
-        public int[] program;
+        private Dictionary<int, int> memory = new Dictionary<int, int>();
         public int relative;
+
+        public int[] MemoryDump(int maxAddress)
+        {
+            var dump = new int[maxAddress];
+            for (int i = 0; i < maxAddress; i++)
+            {
+                dump[i] = getAt(i);
+            }
+            return dump;
+        }
+
+        public int getAt(int index)
+        {
+            return memory.GetValueOrDefault(index);
+        }
+        public void setAt(int index, int value)
+        {
+            memory[index] = value;
+        }
     }
 
     private enum Mode
@@ -64,9 +91,7 @@ class Intcode
 
     public static bool Step(State state)
     {
-        ref int pos = ref state.pos;
-        var program = state.program;
-        int command = program[pos];
+        int command = state.getAt(state.pos);
         int opCode = command % 100;
         var modes = getModes(command);
 
@@ -99,20 +124,19 @@ class Intcode
             case 9:
                 relative(modes, state);
                 return true;
-
             case 99:
-                pos = -1;
+                state.pos = -1;
                 return false;
         }
         throw new Exception("opcode is out of range");
     }
 
-    private static int getValue(Mode mode, int op, int[] program)
+    private static int getValue(Mode mode, int op, State state)
     {
         switch (mode)
         {
             case Mode.Immediate:
-                return program[op];
+                return state.getAt(op);
             case Mode.Position:
                 return op;
             case Mode.Relative:
@@ -124,13 +148,13 @@ class Intcode
     }
     private static int valueAt(Mode[] modes, State state, int index)
     {
-        return getValue(modes[index], state.program[state.pos + index + 1], state.program);
+        return getValue(modes[index], state.getAt(state.pos + index + 1), state);
     }
     private static void writeTo(State state, int index, int value)
     {
         int offset = state.pos + index + 1;
-        int writeOffset = state.program[offset];
-        state.program[writeOffset] = value;
+        int writeOffset = state.getAt(offset);
+        state.setAt(writeOffset, value);
     }
     static void add(Mode[] modes, State state)
     {

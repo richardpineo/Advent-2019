@@ -28,9 +28,9 @@ class Solve2 : ISolve
 
             var start = Intcode.ParseInput(inOut[0]);
             var end = Intcode.ParseInput(inOut[1]);
-            RunProgram(start);
+            var output = RunProgram(start);
             var expected = string.Join(",", end);
-            var actual = string.Join(",", start);
+            var actual = string.Join(",", output);
             if (expected != actual)
             {
                 Console.WriteLine();
@@ -49,13 +49,14 @@ class Solve2 : ISolve
         return true;
     }
 
-    private void RunProgram(int[] program)
+    private int[] RunProgram(int[] program)
     {
-        var state = new Intcode.State { program = program };
+        var state = new Intcode.State(program);
         while (Intcode.Step(state))
         {
             // nothing
         }
+        return state.MemoryDump(program.Length);
     }
 
     public string Solve(bool isA)
@@ -76,9 +77,9 @@ class Solve2 : ISolve
         program[1] = noun;
         program[2] = verb;
 
-        RunProgram(program);
+        var output = RunProgram(program);
 
-        return program[0];
+        return output[0];
     }
 
     public string SolveB()

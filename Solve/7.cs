@@ -79,7 +79,7 @@ class Solve7 : ISolve
             var program = Intcode.ParseInput(rawProgram);
 
             var inputPos = 0;
-            var state = new Intcode.State { input = inputs[inputPos++], program = program.ToArray() };
+            var state = new Intcode.State(program.ToArray(), inputs[inputPos++]);
             while (Intcode.Step(state))
             {
                 if (!state.input.HasValue && inputPos < inputs.Length)
@@ -95,11 +95,11 @@ class Solve7 : ISolve
     private int ComputePowerFeedback(int[] order, string rawProgram)
     {
         var states = new List<Intcode.State>();
-        states.Add(new Intcode.State { input = order[0], program = Intcode.ParseInput(rawProgram).ToArray() });
-        states.Add(new Intcode.State { input = order[1], program = Intcode.ParseInput(rawProgram).ToArray() });
-        states.Add(new Intcode.State { input = order[2], program = Intcode.ParseInput(rawProgram).ToArray() });
-        states.Add(new Intcode.State { input = order[3], program = Intcode.ParseInput(rawProgram).ToArray() });
-        states.Add(new Intcode.State { input = order[4], program = Intcode.ParseInput(rawProgram).ToArray() });
+        states.Add(new Intcode.State(Intcode.ParseInput(rawProgram).ToArray(), order[0]));
+        states.Add(new Intcode.State(Intcode.ParseInput(rawProgram).ToArray(), order[1]));
+        states.Add(new Intcode.State(Intcode.ParseInput(rawProgram).ToArray(), order[2]));
+        states.Add(new Intcode.State(Intcode.ParseInput(rawProgram).ToArray(), order[3]));
+        states.Add(new Intcode.State(Intcode.ParseInput(rawProgram).ToArray(), order[4]));
 
         // Initialize
         var hasInitialized = false;

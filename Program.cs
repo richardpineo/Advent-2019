@@ -78,7 +78,6 @@ namespace AOC2019
                 Console.WriteLine($"  Solve {desc}: {solution}");
                 return true;
             }
-
         }
     }
 }

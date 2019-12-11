@@ -25,14 +25,37 @@ class Intcode
         public int[] program;
     }
 
-    private static bool[] getModes(int command)
+    private enum Mode
+    {
+        Immediate,
+        Position,
+        Relative
+    }
+
+    private static Mode[] getModes(int command)
     {
         var numArgs = 4; // max of 4 args.
         var bitfield = command / 100;
-        var modes = new bool[numArgs];
+        var modes = new Mode[numArgs];
         for (int i = 0; i < numArgs; i++)
         {
-            modes[i] = 0 != bitfield % 2;
+            Mode mode;
+            switch (bitfield % 10)
+            {
+                case 0:
+                    mode = Mode.Immediate;
+                    break;
+                case 1:
+                    mode = Mode.Position;
+                    break;
+                case 2:
+                    mode = Mode.Relative;
+                    break;
+                default:
+                    throw new Exception("bad mode! " + (bitfield % 10).ToString());
+
+            }
+            modes[i] = mode;
             bitfield = bitfield / 10;
         }
         return modes;
@@ -79,17 +102,32 @@ class Intcode
         throw new Exception("opcode is out of range");
     }
 
-    static int add(bool[] modes, int op1, int op2, int op3, int[] program)
+    private static int getValue(Mode mode, int op, int[] program)
     {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
+        switch (mode)
+        {
+            case Mode.Immediate:
+                return program[op];
+            case Mode.Position:
+                return op;
+            case Mode.Relative:
+                // FIXME
+                return op;
+        }
+        throw new Exception("Bad mode: " + mode.ToString());
+    }
+
+    static int add(Mode[] modes, int op1, int op2, int op3, int[] program)
+    {
+        int val1 = getValue(modes[0], op1, program);
+        int val2 = getValue(modes[1], op2, program);
         program[op3] = val1 + val2;
         return 4;
     }
-    static int multiply(bool[] modes, int op1, int op2, int op3, int[] program)
+    static int multiply(Mode[] modes, int op1, int op2, int op3, int[] program)
     {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
+        int val1 = getValue(modes[0], op1, program);
+        int val2 = getValue(modes[1], op2, program);
         program[op3] = val1 * val2;
         return 4;
     }
@@ -103,38 +141,38 @@ class Intcode
         input = null;
         return 2;
     }
-    static int write(bool[] modes, int op1, int[] program, ref int? output)
+    static int write(Mode[] modes, int op1, int[] program, ref int? output)
     {
         if (output.HasValue)
         {
             return 0;
         }
-        output = modes[0] ? op1 : program[op1]; ;
+        output = getValue(modes[0], op1, program);
         return 2;
     }
-    static int jumpTrue(bool[] modes, int pos, int op1, int op2, int[] program)
+    static int jumpTrue(Mode[] modes, int pos, int op1, int op2, int[] program)
     {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
+        int val1 = getValue(modes[0], op1, program);
+        int val2 = getValue(modes[1], op2, program);
         return val1 != 0 ? val2 : (pos + 3);
     }
-    static int jumpFalse(bool[] modes, int pos, int op1, int op2, int[] program)
+    static int jumpFalse(Mode[] modes, int pos, int op1, int op2, int[] program)
     {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
+        int val1 = getValue(modes[0], op1, program);
+        int val2 = getValue(modes[1], op2, program);
         return val1 == 0 ? val2 : (pos + 3);
     }
-    static int lessThan(bool[] modes, int op1, int op2, int op3, int[] program)
+    static int lessThan(Mode[] modes, int op1, int op2, int op3, int[] program)
     {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
+        int val1 = getValue(modes[0], op1, program);
+        int val2 = getValue(modes[1], op2, program);
         program[op3] = val1 < val2 ? 1 : 0;
         return 4;
     }
-    static int equals(bool[] modes, int op1, int op2, int op3, int[] program)
+    static int equals(Mode[] modes, int op1, int op2, int op3, int[] program)
     {
-        int val1 = modes[0] ? op1 : program[op1];
-        int val2 = modes[1] ? op2 : program[op2];
+        int val1 = getValue(modes[0], op1, program);
+        int val2 = getValue(modes[1], op2, program);
         program[op3] = val1 == val2 ? 1 : 0;
         return 4;
     }

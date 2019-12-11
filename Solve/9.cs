@@ -50,7 +50,14 @@ class Solve9 : ISolve
     }
     private bool ProveA2()
     {
-        return true;
+        var input = "1102,34915192,34915192,7,4,7,99,0";
+        var program = Intcode.ParseInput(input);
+        var state = new Intcode.State(program);
+        while (Intcode.Step(state))
+        {
+            // nothing
+        }
+        return state.PopOutput().Value.ToString().Length == 16;
     }
     private bool ProveA3()
     {

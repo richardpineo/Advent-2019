@@ -1,10 +1,6 @@
 using System;
-using System.IO;
-using System.Text;
 using System.Collections.Generic;
-using System.Linq;
-using Row = System.Collections.Generic.List<int>;
-using Layer = System.Collections.Generic.List<System.Collections.Generic.List<int>>;
+using IntType = System.Int64;
 
 class Solve9 : ISolve
 {
@@ -27,6 +23,29 @@ class Solve9 : ISolve
 
     private bool ProveA1()
     {
+        var input = "109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99";
+        var program = Intcode.ParseInput(input);
+        var state = new Intcode.State(program);
+        var outputs = new List<IntType>();
+        while (Intcode.Step(state))
+        {
+            if (state.output.HasValue)
+            {
+                var output = state.PopOutput();
+                if (output.HasValue)
+                {
+                    outputs.Add(output.Value);
+                }
+            }
+        }
+        var final = string.Join(",", outputs);
+        if (final != input)
+        {
+            Console.WriteLine();
+            Console.WriteLine($"Input: {input}");
+            Console.WriteLine($"Final: {final}");
+            return false;
+        }
         return true;
     }
     private bool ProveA2()

@@ -135,8 +135,7 @@ class Solve7 : ISolve
                     }
                     if (!states[toState].input.HasValue)
                     {
-                        states[toState].input = states[i].output;
-                        states[i].output = null;
+                        states[toState].input = states[i].PopOutput();
                     }
                 }
             }

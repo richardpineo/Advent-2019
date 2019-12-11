@@ -29,7 +29,17 @@ class Intcode
         public IntType? input;
         public IntType pos = 0;
         private Dictionary<IntType, IntType> memory = new Dictionary<IntType, IntType>();
-        public IntType relative;
+        public IntType relativeBase;
+
+        public IntType? PopOutput()
+        {
+            var value = output;
+            if (output.HasValue)
+            {
+                output = null;
+            }
+            return value;
+        }
 
         public IntType[] MemoryDump(IntType maxAddress)
         {
@@ -138,9 +148,7 @@ class Intcode
             case Mode.Position:
                 return op;
             case Mode.Relative:
-                // FIXME
-                throw new Exception("Bad mode: " + mode.ToString());
-                //        return op;
+                return state.getAt(state.relativeBase + op);
         }
         throw new Exception("Bad mode: " + mode.ToString());
     }
@@ -212,7 +220,7 @@ class Intcode
 
     static void relative(Mode[] modes, State state)
     {
-        state.relative += valueAt(modes, state, 0);
+        state.relativeBase += valueAt(modes, state, 0);
         state.pos += 2;
     }
 }

@@ -82,10 +82,10 @@ class Solve5 : ISolve
         {
             // nothing
             // consume the output
-            if (state.output.HasValue)
+            var tempOut = state.PopOutput();
+            if (tempOut.HasValue)
             {
-                finalOutput = state.output.Value;
-                state.output = null;
+                finalOutput = tempOut.Value;
             }
         }
         program = state.MemoryDump(program.Length);

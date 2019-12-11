@@ -73,31 +73,31 @@ class Intcode
         switch (opCode)
         {
             case 1:
-                pos += add(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
+                add(modes, state);
                 return true;
             case 2:
-                pos += multiply(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
+                multiply(modes, state);
                 return true;
             case 3:
-                pos += read(program[pos + 1], ref state.input, program);
+                read(modes, state);
                 return true;
             case 4:
-                pos += write(modes, program[pos + 1], program, ref state.output);
+                write(modes, state);
                 return true;
             case 5:
-                pos = jumpTrue(modes, pos, program[pos + 1], program[pos + 2], program);
+                jumpTrue(modes, state);
                 return true;
             case 6:
-                pos = jumpFalse(modes, pos, program[pos + 1], program[pos + 2], program);
+                jumpFalse(modes, state);
                 return true;
             case 7:
-                pos += lessThan(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
+                lessThan(modes, state);
                 return true;
             case 8:
-                pos += equals(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
+                equals(modes, state);
                 return true;
             case 9:
-                pos += relative(modes, program[pos + 1], program, ref state.relative);
+                relative(modes, state);
                 return true;
 
             case 99:
@@ -117,74 +117,80 @@ class Intcode
                 return op;
             case Mode.Relative:
                 // FIXME
-                return op;
+                throw new Exception("Bad mode: " + mode.ToString());
+                //        return op;
         }
         throw new Exception("Bad mode: " + mode.ToString());
     }
-
-    static int add(Mode[] modes, int op1, int op2, int op3, int[] program)
+    private static int valueAt(Mode[] modes, State state, int index)
     {
-        int val1 = getValue(modes[0], op1, program);
-        int val2 = getValue(modes[1], op2, program);
-        program[op3] = val1 + val2;
-        return 4;
+        return getValue(modes[index], state.program[state.pos + index + 1], state.program);
     }
-    static int multiply(Mode[] modes, int op1, int op2, int op3, int[] program)
+    private static void writeTo(State state, int index, int value)
     {
-        int val1 = getValue(modes[0], op1, program);
-        int val2 = getValue(modes[1], op2, program);
-        program[op3] = val1 * val2;
-        return 4;
+        int offset = state.pos + index + 1;
+        int writeOffset = state.program[offset];
+        state.program[writeOffset] = value;
     }
-    static int read(int op1, ref int? input, int[] program)
+    static void add(Mode[] modes, State state)
     {
-        if (!input.HasValue)
+        int sum = valueAt(modes, state, 0) + valueAt(modes, state, 1);
+        writeTo(state, 2, sum);
+        state.pos += 4;
+    }
+    static void multiply(Mode[] modes, State state)
+    {
+        int product = valueAt(modes, state, 0) * valueAt(modes, state, 1);
+        writeTo(state, 2, product);
+        state.pos += 4;
+    }
+    static void read(Mode[] modes, State state)
+    {
+        if (state.input.HasValue)
         {
-            return 0;
+            writeTo(state, 0, state.input.Value);
+            state.input = null;
+            state.pos += 2;
         }
-        program[op1] = input.Value;
-        input = null;
-        return 2;
     }
-    static int write(Mode[] modes, int op1, int[] program, ref int? output)
+    static void write(Mode[] modes, State state)
     {
-        if (output.HasValue)
+        if (!state.output.HasValue)
         {
-            return 0;
+            state.output = valueAt(modes, state, 0);
+            state.pos += 2;
         }
-        output = getValue(modes[0], op1, program);
-        return 2;
     }
-    static int relative(Mode[] modes, int op1, int[] program, ref int relative)
+    static void jumpTrue(Mode[] modes, State state)
     {
-        relative += getValue(modes[0], op1, program);
-        return 2;
+        int val1 = valueAt(modes, state, 0);
+        int val2 = valueAt(modes, state, 1);
+        state.pos = val1 != 0 ? val2 : (state.pos + 3);
+    }
+    static void jumpFalse(Mode[] modes, State state)
+    {
+        int val1 = valueAt(modes, state, 0);
+        int val2 = valueAt(modes, state, 1);
+        state.pos = val1 == 0 ? val2 : (state.pos + 3);
+    }
+    static void lessThan(Mode[] modes, State state)
+    {
+        int val1 = valueAt(modes, state, 0);
+        int val2 = valueAt(modes, state, 1);
+        writeTo(state, 2, val1 < val2 ? 1 : 0);
+        state.pos += 4;
+    }
+    static void equals(Mode[] modes, State state)
+    {
+        int val1 = valueAt(modes, state, 0);
+        int val2 = valueAt(modes, state, 1);
+        writeTo(state, 2, val1 == val2 ? 1 : 0);
+        state.pos += 4;
     }
 
-    static int jumpTrue(Mode[] modes, int pos, int op1, int op2, int[] program)
+    static void relative(Mode[] modes, State state)
     {
-        int val1 = getValue(modes[0], op1, program);
-        int val2 = getValue(modes[1], op2, program);
-        return val1 != 0 ? val2 : (pos + 3);
-    }
-    static int jumpFalse(Mode[] modes, int pos, int op1, int op2, int[] program)
-    {
-        int val1 = getValue(modes[0], op1, program);
-        int val2 = getValue(modes[1], op2, program);
-        return val1 == 0 ? val2 : (pos + 3);
-    }
-    static int lessThan(Mode[] modes, int op1, int op2, int op3, int[] program)
-    {
-        int val1 = getValue(modes[0], op1, program);
-        int val2 = getValue(modes[1], op2, program);
-        program[op3] = val1 < val2 ? 1 : 0;
-        return 4;
-    }
-    static int equals(Mode[] modes, int op1, int op2, int op3, int[] program)
-    {
-        int val1 = getValue(modes[0], op1, program);
-        int val2 = getValue(modes[1], op2, program);
-        program[op3] = val1 == val2 ? 1 : 0;
-        return 4;
+        state.relative += valueAt(modes, state, 0);
+        state.pos += 2;
     }
 }

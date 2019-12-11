@@ -23,6 +23,7 @@ class Intcode
         public int? input;
         public int pos = 0;
         public int[] program;
+        public int relative;
     }
 
     private enum Mode
@@ -95,6 +96,10 @@ class Intcode
             case 8:
                 pos += equals(modes, program[pos + 1], program[pos + 2], program[pos + 3], program);
                 return true;
+            case 9:
+                pos += relative(modes, program[pos + 1], program, ref state.relative);
+                return true;
+
             case 99:
                 pos = -1;
                 return false;
@@ -150,6 +155,12 @@ class Intcode
         output = getValue(modes[0], op1, program);
         return 2;
     }
+    static int relative(Mode[] modes, int op1, int[] program, ref int relative)
+    {
+        relative += getValue(modes[0], op1, program);
+        return 2;
+    }
+
     static int jumpTrue(Mode[] modes, int pos, int op1, int op2, int[] program)
     {
         int val1 = getValue(modes[0], op1, program);

@@ -28,6 +28,50 @@ public static class HullExtensions
     {
         return hull.Keys.Count;
     }
+
+    public static void Render(this Hull hull)
+    {
+        // First, find the bounds.
+        var topLeft = new Point(0, 0);
+        var bottomRight = new Point(0, 0);
+        foreach (var key in hull.Keys)
+        {
+            if (key.X < topLeft.X)
+            {
+                topLeft.X = key.X;
+            }
+            else if (key.X > bottomRight.X)
+            {
+                bottomRight.X = key.X;
+            }
+
+            if (key.Y < topLeft.Y)
+            {
+                topLeft.Y = key.Y;
+            }
+            else if (key.Y > bottomRight.Y)
+            {
+                bottomRight.Y = key.Y;
+            }
+        }
+
+        // Render the square
+        for (var y = topLeft.Y; y <= bottomRight.Y; y++)
+        {
+            for (var x = topLeft.X; x <= bottomRight.X; x++)
+            {
+                if (Color.White == hull.ColorAt(new Point(x, y)))
+                {
+                    Console.Write("#");
+                }
+                else
+                {
+                    Console.Write(" ");
+                }
+            }
+            Console.WriteLine();
+        }
+    }
 }
 
 public enum Direction
@@ -106,16 +150,7 @@ class Solve11 : ISolve
 
     public bool Prove(bool isA)
     {
-        return isA ? ProveA() : ProveB();
-    }
-
-    private bool ProveA()
-    {
-        return true;
-    }
-
-    public bool ProveB()
-    {
+        // No proof
         return true;
     }
 
@@ -123,7 +158,8 @@ class Solve11 : ISolve
     {
         var lines = File.ReadAllLines(Input, Encoding.UTF8);
         var program = Intcode.ParseInput(lines[0]);
-        var state = new Intcode.State(program, (long)Color.Black);
+        var startingColor = isA ? Color.Black : Color.White;
+        var state = new Intcode.State(program, (long)startingColor);
         var hull = new Hull();
         var robot = new Robot();
 
@@ -159,7 +195,16 @@ class Solve11 : ISolve
             }
         }
 
-        // Count up the doubled squares.
-        return hull.Painted().ToString();
+        if (isA)
+        {
+            // Count up the doubled squares.
+            return hull.Painted().ToString();
+        }
+        else
+        {
+            // Render it
+            hull.Render();
+            return "Manual";
+        }
     }
 }

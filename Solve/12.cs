@@ -8,21 +8,13 @@ using System.Linq;
 using System.Diagnostics;
 
 [DebuggerDisplay("({x},{y},{z})")]
-class Point3D : IComparable
+class Point3D
 {
     public int x;
     public int y;
     public int z;
 
-    public string Uid
-    {
-        get
-        {
-            return $"{x}{y}{z}";
-        }
-    }
-
-    public Point3D Inverted
+    public Point3D inverted
     {
         get
         {
@@ -30,7 +22,7 @@ class Point3D : IComparable
         }
     }
 
-    public Point3D Flattened
+    public Point3D flattened
     {
         get
         {
@@ -56,7 +48,7 @@ class Point3D : IComparable
         return 0;
     }
 
-    public static Point3D Parse(string line)
+    public static Point3D parse(string line)
     {
         // <x=13, y=-3, z=0>
         var regex = "<x=([0-9-]+), y=([0-9-]+), z=([0-9-]+)>";
@@ -70,37 +62,20 @@ class Point3D : IComparable
         };
     }
 
-    public void Add(Point3D other)
+    public void add(Point3D other)
     {
         x += other.x;
         y += other.y;
         z += other.z;
     }
-
-    public int CompareTo(object obj)
-    {
-        var other = (Point3D)obj;
-        var xc = x.CompareTo(other.x);
-        var yc = y.CompareTo(other.y);
-        var zc = z.CompareTo(other.z);
-        return xc != 0 ? xc : (yc != 0 ? yc : (zc != 0 ? zc : 0));
-    }
 }
 
 [DebuggerDisplay("p=({position.uid}) v=({velocity.uid})")]
-class Moon : IComparable
+class Moon
 {
     public Moon(Point3D position)
     {
         this.position = position;
-    }
-
-    public string Uid
-    {
-        get
-        {
-            return $"{position.Uid}{velocity.Uid}";
-        }
     }
 
     public int potential
@@ -144,18 +119,6 @@ class Moon : IComparable
                 throw new Exception("out of range");
         }
     }
-
-    public int CompareTo(object obj)
-    {
-        var other = (Moon)obj;
-        var pos = this.position.CompareTo(other.position);
-        if (pos != 0)
-        {
-            return pos;
-        }
-        return this.velocity.CompareTo(other.velocity);
-
-    }
 }
 
 [DebuggerDisplay("{moon}: {velocityDelta}")]
@@ -166,7 +129,7 @@ class Gravity
 
     public void Apply()
     {
-        moon.velocity.Add(velocityDelta);
+        moon.velocity.add(velocityDelta);
     }
 }
 
@@ -174,12 +137,12 @@ class Space
 {
     public Moons moons = new Moons();
 
-    public Moon[][] MoonPairs;
+    public Moon[][] moonPairs;
 
-    public void ApplyGravity()
+    public void applyGravity()
     {
         var allGravity = new List<Gravity>();
-        foreach (var pair in MoonPairs)
+        foreach (var pair in moonPairs)
         {
             var moon1 = pair[0];
             var moon2 = pair[1];
@@ -189,8 +152,8 @@ class Space
                 y = moon2.position.y - moon1.position.y,
                 z = moon2.position.z - moon1.position.z,
             };
-            var g1 = new Gravity() { moon = moon1, velocityDelta = delta.Flattened };
-            var g2 = new Gravity() { moon = moon2, velocityDelta = delta.Inverted.Flattened };
+            var g1 = new Gravity() { moon = moon1, velocityDelta = delta.flattened };
+            var g2 = new Gravity() { moon = moon2, velocityDelta = delta.inverted.flattened };
             allGravity.Add(g1);
             allGravity.Add(g2);
         }
@@ -202,15 +165,15 @@ class Space
         }
     }
 
-    public void ApplyVelocity()
+    public void applyVelocity()
     {
         foreach (var moon in moons)
         {
-            moon.position.Add(moon.velocity);
+            moon.position.add(moon.velocity);
         }
     }
 
-    public int Energy
+    public int energy
     {
         get
         {
@@ -218,29 +181,11 @@ class Space
         }
     }
 
-    public int Kinetic
+    public int kinetic
     {
         get
         {
             return moons.Sum(m => m.kinetic);
-        }
-    }
-
-    public string position
-    {
-        get
-        {
-            // Lasy, assume 4.
-            return $"{moons[0].position.Uid}|{moons[1].position.Uid}|{moons[2].position.Uid}|{moons[3].position.Uid}";
-        }
-    }
-
-    public string Uid
-    {
-        get
-        {
-            // Lasy, assume 4.
-            return $"{moons[0].Uid}{moons[1].Uid}{moons[2].Uid}{moons[3].Uid}";
         }
     }
 
@@ -285,12 +230,22 @@ class Solve12 : ISolve
 
     bool ProveAFor(string file, int steps, int answer)
     {
-        var energy = CalculateEnergy(MakeSpace(file), steps);
+        var energy = calculateEnergy(makeSpace(file), steps);
         if (energy != answer)
         {
             Console.WriteLine($"  Expected {answer} but got {energy}");
         }
         return energy == answer;
+    }
+
+    bool ProveBFor(string file, long answer)
+    {
+        var attempt = findCycle(file);
+        if (attempt != answer)
+        {
+            Console.WriteLine($"  Expected {answer} but got {attempt}");
+        }
+        return attempt == answer;
     }
 
     static long GreatestCommonFactor(long a, long b)
@@ -304,12 +259,6 @@ class Solve12 : ISolve
         return a;
     }
 
-    /*
-     static long LeastCommonMultiple(long a, long b)
-      {
-          return (a / GreatestCommonFactor(a, b)) * b;
-      }
-      */
     long LeastCommonMultiple(long[] values)
     {
         // Initialize result 
@@ -326,41 +275,31 @@ class Solve12 : ISolve
         return ans;
     }
 
-    bool ProveBFor(string file, long answer)
+    long findCycle(string file)
     {
-        var attempt = FindCycle(file);
-        if (attempt != answer)
-        {
-            Console.WriteLine($"  Expected {answer} but got {attempt}");
-        }
-        return attempt == answer;
-    }
-
-    long FindCycle(string file)
-    {
-        var repeatX = FindRepeatingState(MakeSpace(file), 0);
-        var repeatY = FindRepeatingState(MakeSpace(file), 1);
-        var repeatZ = FindRepeatingState(MakeSpace(file), 2);
+        var repeatX = findRepeatingState(makeSpace(file), 0);
+        var repeatY = findRepeatingState(makeSpace(file), 1);
+        var repeatZ = findRepeatingState(makeSpace(file), 2);
         var values = new long[] { repeatX, repeatY, repeatZ };
         return LeastCommonMultiple(values);
     }
 
     public string Solve(bool isA)
     {
-        return isA ? CalculateEnergy(MakeSpace(Input), 1000).ToString() : SolveB();
+        return isA ? calculateEnergy(makeSpace(Input), 1000).ToString() : SolveB();
     }
 
-    Space MakeSpace(string filename)
+    Space makeSpace(string filename)
     {
         var lines = File.ReadAllLines(filename, Encoding.UTF8);
         var space = new Space();
         foreach (var line in lines)
         {
-            var p = Point3D.Parse(line);
+            var p = Point3D.parse(line);
             space.moons.Add(new Moon(p));
         }
         // Only works for 4.
-        space.MoonPairs = new Moon[][]{
+        space.moonPairs = new Moon[][]{
             new Moon[] { space.moons[0], space.moons[1] },
             new Moon[] { space.moons[0], space.moons[2] },
             new Moon[] { space.moons[0], space.moons[3] },
@@ -371,19 +310,14 @@ class Solve12 : ISolve
         return space;
     }
 
-    int CalculateEnergy(Space space, int numSteps)
-    {
-        StepSpace(space, numSteps);
-        return space.Energy;
-    }
-
-    void StepSpace(Space space, long numSteps)
+    int calculateEnergy(Space space, int numSteps)
     {
         for (long i = 0; i < numSteps; i++)
         {
-            space.ApplyGravity();
-            space.ApplyVelocity();
+            space.applyGravity();
+            space.applyVelocity();
         }
+        return space.energy;
     }
 
     bool differentVector(Tuple<int, int>[] a, Tuple<int, int>[] b)
@@ -397,19 +331,18 @@ class Solve12 : ISolve
             a[2].Item2 != b[2].Item2 ||
             a[3].Item1 != b[3].Item1 ||
             a[3].Item2 != b[3].Item2;
-
     }
 
-    long FindRepeatingState(Space space, int axis)
+    long findRepeatingState(Space space, int axis)
     {
         var toFind = space.vector(axis);
-        space.ApplyGravity();
-        space.ApplyVelocity();
+        space.applyGravity();
+        space.applyVelocity();
         long period = 1;
         while (differentVector(space.vector(axis), toFind))
         {
-            space.ApplyGravity();
-            space.ApplyVelocity();
+            space.applyGravity();
+            space.applyVelocity();
             period++;
         }
         return period;
@@ -417,7 +350,7 @@ class Solve12 : ISolve
 
     private string SolveB()
     {
-        long cycle = FindCycle(Input);
+        long cycle = findCycle(Input);
         return cycle.ToString();
     }
 }

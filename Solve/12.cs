@@ -7,12 +7,20 @@ using System.Text.RegularExpressions;
 using System.Linq;
 using System.Diagnostics;
 
-[DebuggerDisplay("({x}, {y}, {z})")]
+[DebuggerDisplay("({x},{y},{z})")]
 class Point3D : IComparable
 {
     public int x;
     public int y;
     public int z;
+
+    public string Uid
+    {
+        get
+        {
+            return $"{x}{y}{z}";
+        }
+    }
 
     public Point3D Inverted
     {
@@ -79,12 +87,20 @@ class Point3D : IComparable
     }
 }
 
-[DebuggerDisplay("p=({position.x}, {position.y}, {position.z}) v=({velocity.x}, {velocity.y}, {velocity.z})")]
+[DebuggerDisplay("p=({position.uid}) v=({velocity.uid})")]
 class Moon : IComparable
 {
     public Moon(Point3D position)
     {
         this.position = position;
+    }
+
+    public string Uid
+    {
+        get
+        {
+            return $"{position.Uid}{velocity.Uid}";
+        }
     }
 
     public int potential
@@ -113,6 +129,21 @@ class Moon : IComparable
 
     public Point3D position;
     public Point3D velocity = new Point3D() { x = 0, y = 0, z = 0 };
+
+    public Tuple<int, int> vector(int axis)
+    {
+        switch (axis)
+        {
+            case 0:
+                return new Tuple<int, int>(position.x, velocity.x);
+            case 1:
+                return new Tuple<int, int>(position.y, velocity.y);
+            case 2:
+                return new Tuple<int, int>(position.z, velocity.z);
+            default:
+                throw new Exception("out of range");
+        }
+    }
 
     public int CompareTo(object obj)
     {
@@ -143,14 +174,15 @@ class Space
 {
     public Moons moons = new Moons();
 
+    public Moon[][] MoonPairs;
+
     public void ApplyGravity()
     {
         var allGravity = new List<Gravity>();
-        var pairs = Util.GetKCombs(moons, 2);
-        foreach (var pair in pairs)
+        foreach (var pair in MoonPairs)
         {
-            var moon1 = pair.ElementAt(0);
-            var moon2 = pair.ElementAt(1);
+            var moon1 = pair[0];
+            var moon2 = pair[1];
             var delta = new Point3D()
             {
                 x = moon2.position.x - moon1.position.x,
@@ -169,6 +201,7 @@ class Space
             g.Apply();
         }
     }
+
     public void ApplyVelocity()
     {
         foreach (var moon in moons)
@@ -184,6 +217,43 @@ class Space
             return moons.Sum(m => m.total);
         }
     }
+
+    public int Kinetic
+    {
+        get
+        {
+            return moons.Sum(m => m.kinetic);
+        }
+    }
+
+    public string position
+    {
+        get
+        {
+            // Lasy, assume 4.
+            return $"{moons[0].position.Uid}|{moons[1].position.Uid}|{moons[2].position.Uid}|{moons[3].position.Uid}";
+        }
+    }
+
+    public string Uid
+    {
+        get
+        {
+            // Lasy, assume 4.
+            return $"{moons[0].Uid}{moons[1].Uid}{moons[2].Uid}{moons[3].Uid}";
+        }
+    }
+
+    public Tuple<int, int>[] vector(int axis)
+    {
+        var tuples = new Tuple<int, int>[4];
+        tuples[0] = moons[0].vector(axis);
+        tuples[1] = moons[1].vector(axis);
+        tuples[2] = moons[2].vector(axis);
+        tuples[3] = moons[3].vector(axis);
+        return tuples;
+    }
+
 }
 
 class Solve12 : ISolve
@@ -199,14 +269,23 @@ class Solve12 : ISolve
 
     public bool Prove(bool isA)
     {
-        return
-        ProveFor(ExampleA1, 10, 179) &&
-        ProveFor(ExampleA2, 100, 1940);
+        if (isA)
+        {
+            return
+                ProveAFor(ExampleA1, 10, 179) &&
+                ProveAFor(ExampleA2, 100, 1940);
+        }
+        else
+        {
+            return
+                ProveBFor(ExampleA1, 2772) &&
+                ProveBFor(ExampleA2, 4686774924);
+        }
     }
 
-    public bool ProveFor(string file, int steps, int answer)
+    bool ProveAFor(string file, int steps, int answer)
     {
-        var energy = CalculateEnergy(file, steps);
+        var energy = CalculateEnergy(MakeSpace(file), steps);
         if (energy != answer)
         {
             Console.WriteLine($"  Expected {answer} but got {energy}");
@@ -214,12 +293,64 @@ class Solve12 : ISolve
         return energy == answer;
     }
 
-    public string Solve(bool isA)
+    static long GreatestCommonFactor(long a, long b)
     {
-        return CalculateEnergy(Input, 1000).ToString();
+        while (b != 0)
+        {
+            long temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return a;
     }
 
-    public int CalculateEnergy(string filename, int numSteps)
+    /*
+     static long LeastCommonMultiple(long a, long b)
+      {
+          return (a / GreatestCommonFactor(a, b)) * b;
+      }
+      */
+    long LeastCommonMultiple(long[] values)
+    {
+        // Initialize result 
+        long ans = values[0];
+
+        // ans contains LCM of arr[0], ..arr[i] 
+        // after i'th iteration, 
+        for (int i = 1; i < values.Length; i++)
+        {
+            ans = (((values[i] * ans)) /
+                    (GreatestCommonFactor(values[i], ans)));
+        }
+
+        return ans;
+    }
+
+    bool ProveBFor(string file, long answer)
+    {
+        var attempt = FindCycle(file);
+        if (attempt != answer)
+        {
+            Console.WriteLine($"  Expected {answer} but got {attempt}");
+        }
+        return attempt == answer;
+    }
+
+    long FindCycle(string file)
+    {
+        var repeatX = FindRepeatingState(MakeSpace(file), 0);
+        var repeatY = FindRepeatingState(MakeSpace(file), 1);
+        var repeatZ = FindRepeatingState(MakeSpace(file), 2);
+        var values = new long[] { repeatX, repeatY, repeatZ };
+        return LeastCommonMultiple(values);
+    }
+
+    public string Solve(bool isA)
+    {
+        return isA ? CalculateEnergy(MakeSpace(Input), 1000).ToString() : SolveB();
+    }
+
+    Space MakeSpace(string filename)
     {
         var lines = File.ReadAllLines(filename, Encoding.UTF8);
         var space = new Space();
@@ -228,12 +359,65 @@ class Solve12 : ISolve
             var p = Point3D.Parse(line);
             space.moons.Add(new Moon(p));
         }
+        // Only works for 4.
+        space.MoonPairs = new Moon[][]{
+            new Moon[] { space.moons[0], space.moons[1] },
+            new Moon[] { space.moons[0], space.moons[2] },
+            new Moon[] { space.moons[0], space.moons[3] },
+            new Moon[] { space.moons[1], space.moons[2] },
+            new Moon[] { space.moons[1], space.moons[3] },
+            new Moon[] { space.moons[2], space.moons[3] }
+        };
+        return space;
+    }
 
-        for (int i = 0; i < numSteps; i++)
+    int CalculateEnergy(Space space, int numSteps)
+    {
+        StepSpace(space, numSteps);
+        return space.Energy;
+    }
+
+    void StepSpace(Space space, long numSteps)
+    {
+        for (long i = 0; i < numSteps; i++)
         {
             space.ApplyGravity();
             space.ApplyVelocity();
         }
-        return space.Energy;
+    }
+
+    bool differentVector(Tuple<int, int>[] a, Tuple<int, int>[] b)
+    {
+        return
+            a[0].Item1 != b[0].Item1 ||
+            a[0].Item2 != b[0].Item2 ||
+            a[1].Item1 != b[1].Item1 ||
+            a[1].Item2 != b[1].Item2 ||
+            a[2].Item1 != b[2].Item1 ||
+            a[2].Item2 != b[2].Item2 ||
+            a[3].Item1 != b[3].Item1 ||
+            a[3].Item2 != b[3].Item2;
+
+    }
+
+    long FindRepeatingState(Space space, int axis)
+    {
+        var toFind = space.vector(axis);
+        space.ApplyGravity();
+        space.ApplyVelocity();
+        long period = 1;
+        while (differentVector(space.vector(axis), toFind))
+        {
+            space.ApplyGravity();
+            space.ApplyVelocity();
+            period++;
+        }
+        return period;
+    }
+
+    private string SolveB()
+    {
+        long cycle = FindCycle(Input);
+        return cycle.ToString();
     }
 }

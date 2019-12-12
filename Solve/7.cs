@@ -172,15 +172,6 @@ class Solve7 : ISolve
         return SolveFor(boosters, ComputePowerFeedback).ToString();
     }
 
-    // https://stackoverflow.com/questions/1952153/what-is-the-best-way-to-find-all-combinations-of-items-in-an-array/10629938#10629938
-    static IEnumerable<IEnumerable<T>> GetPermutations<T>(IEnumerable<T> list, IntType length)
-    {
-        if (length == 1) return list.Select(t => new T[] { t });
-        return GetPermutations(list, length - 1)
-            .SelectMany(t => list.Where(o => !t.Contains(o)),
-                (t1, t2) => t1.Concat(new T[] { t2 }));
-    }
-
     private IntType SolveFor(IntType[] boosters, Func<IntType[], string, IntType> computer)
     {
         var lines = File.ReadAllLines(Input, Encoding.UTF8);
@@ -188,7 +179,7 @@ class Solve7 : ISolve
 
         IntType maxPower = 0;
 
-        var attempts = GetPermutations(boosters, 5);
+        var attempts = Util.GetPermutations(boosters, 5);
 
         foreach (var attempt in attempts)
         {

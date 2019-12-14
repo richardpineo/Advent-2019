@@ -21,7 +21,7 @@ class Solve13 : ISolve
 
     public string Solve(bool isA)
     {
-        return isA ? SolveA() : "Not Impl";
+        return isA ? SolveA() : SolveB();
     }
 
     public string SolveA()
@@ -42,6 +42,11 @@ class Solve13 : ISolve
             }
         }
 
+        return countBlocks(outputs).ToString();
+    }
+
+    private int countBlocks(List<IntType> outputs)
+    {
         int count = 0;
         for (int i = 2; i < outputs.Count; i += 3)
         {
@@ -50,7 +55,49 @@ class Solve13 : ISolve
                 count++;
             }
         }
+        return count;
+    }
 
-        return count.ToString();
+    public string SolveB()
+    {
+        var lines = File.ReadAllLines(Input, Encoding.UTF8);
+        var program = Intcode.ParseInput(lines[0]);
+        program[0] = 2;
+
+        var state = new Intcode.State(program);
+        var outputs = new List<IntType>();
+        IntType score = 0;
+        IntType paddlePos = 0;
+        IntType ballPos = 0;
+        while (Intcode.Step(state))
+        {
+            var output = state.PopOutput();
+            if (output.HasValue)
+            {
+                outputs.Add(output.Value);
+                if (outputs.Count == 3)
+                {
+                    var x = outputs[0];
+                    var y = outputs[1];
+                    var other = outputs[2];
+                    if (x == -1 && y == 0)
+                    {
+                        score = other;
+                    }
+                    else if (other == 3)
+                    {
+                        paddlePos = x;
+                    }
+                    else if (other == 4)
+                    {
+                        ballPos = x;
+                    }
+                    state.input = ballPos.CompareTo(paddlePos);
+                    outputs.Clear();
+                }
+            }
+
+        }
+        return score.ToString();
     }
 }

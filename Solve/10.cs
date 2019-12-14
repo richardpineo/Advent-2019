@@ -82,6 +82,12 @@ class Solve10 : ISolve
 
     public bool ProveB(string input, Point station, int answer)
     {
+        var solve = SolveB(input, station);
+        return solve == answer;
+
+    }
+    public int SolveB(string input, Point station)
+    {
         var lines = File.ReadAllLines(input, Encoding.UTF8);
         var starMap = StarMap.Parse(lines);
 
@@ -117,8 +123,7 @@ class Solve10 : ISolve
         }
 
         var asteroid = last.Value;
-        var possible = Math.Round(asteroid.X * 100 + asteroid.Y);
-        return answer == possible;
+        return (int)Math.Round(asteroid.X * 100 + asteroid.Y);
     }
 
     class PolarStarMap
@@ -140,12 +145,6 @@ class Solve10 : ISolve
                 }
                 return theta1.CompareTo(theta2);
             });
-            /*
-                        foreach (var star in stars)
-                        {
-                            Console.WriteLine(star);
-                        }
-                        */
         }
 
         public List<Point> stars;
@@ -280,11 +279,12 @@ class Solve10 : ISolve
             var lines = File.ReadAllLines(Input, Encoding.UTF8);
             var starMap = StarMap.Parse(lines);
             starMap.FindBestAsteroid();
+            Console.WriteLine($"Best star is {starMap.bestStar} with {starMap.maxStarsVisible} visible.");
             return starMap.maxStarsVisible.ToString();
         }
         else
         {
-            return "Not Impl";
+            return SolveB(Input, new Point(37, 25)).ToString();
         }
     }
 }

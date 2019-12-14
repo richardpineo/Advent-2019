@@ -5,6 +5,34 @@ using System.Collections.Generic;
 using System.Linq;
 using Point = System.Drawing.PointF;
 
+public static class Helper
+{
+    static public bool sameAs(double f1, double f2)
+    {
+        var epsilon = 0.000001;
+        return Math.Abs(f1 - f2) < epsilon;
+    }
+
+    static public double theta(Point p, Point from)
+    {
+        var offsetX = p.X - from.X;
+        var offsetY = p.Y - from.Y;
+
+        var theta = Math.Atan2(offsetY, offsetX);
+        //  return theta - Math.PI / 2.0;
+        var upTheta = (theta + Math.PI / 2.0 + Math.PI * 2.0) % (Math.PI * 2.0);
+        return upTheta;
+    }
+
+    static public double r(Point p, Point from)
+    {
+        var offsetX = p.X - from.X;
+        var offsetY = p.Y - from.Y;
+
+        return Math.Sqrt(offsetX * offsetX + offsetY * offsetY);
+    }
+}
+
 class Solve10 : ISolve
 {
     public string Description()
@@ -15,6 +43,11 @@ class Solve10 : ISolve
     const string Input = "Input//10.txt";
 
     public bool Prove(bool isA)
+    {
+        return isA ? ProveA() : ProveB();
+    }
+
+    public bool ProveA()
     {
         var tests = new string[] {
             "Examples//10-1.txt",
@@ -38,6 +71,84 @@ class Solve10 : ISolve
         }
 
         return true;
+    }
+
+    public bool ProveB()
+    {
+        return
+            ProveB("Examples//10-b-1.txt", new Point(8, 3), 1403) &&
+            ProveB("Examples//10-b-2.txt", new Point(11, 13), 802);
+    }
+
+    public bool ProveB(string input, Point station, int answer)
+    {
+        var lines = File.ReadAllLines(input, Encoding.UTF8);
+        var starMap = StarMap.Parse(lines);
+
+        // Convert all the stars to polar coords
+        var polar = new PolarStarMap(starMap, station);
+
+        var destroyed = new List<Point>();
+        Func<int, int> increment = (index) =>
+        {
+            index++;
+            if (index >= polar.stars.Count)
+            {
+                index = 0;
+            }
+            return index;
+        };
+        Point? last = null;
+        for (int index = 0; destroyed.Count < 200 && destroyed.Count < polar.stars.Count; index = increment(index))
+        {
+            if (index == 0)
+            {
+                last = null;
+            }
+            var consider = polar.stars[index];
+            bool sameAngle = last.HasValue && Helper.sameAs(Helper.theta(last.Value, station), Helper.theta(consider, station));
+            bool valid = !destroyed.Contains(polar.stars[index]) && !sameAngle;
+            if (valid)
+            {
+                destroyed.Add(consider);
+                last = consider;
+                // Console.WriteLine(consider);
+            }
+        }
+
+        var asteroid = last.Value;
+        var possible = Math.Round(asteroid.X * 100 + asteroid.Y);
+        return answer == possible;
+    }
+
+    class PolarStarMap
+    {
+        public PolarStarMap(StarMap map, Point station)
+        {
+            stars = new List<Point>(map.stars.Where(p => p != station));
+
+            // Order them by theta
+            stars.Sort((p1, p2) =>
+            {
+                // First by Y (theta) then by X (r)
+                var theta1 = Helper.theta(p1, station);
+                var theta2 = Helper.theta(p2, station);
+                if (Helper.sameAs(theta1, theta2))
+                {
+                    // Reverse order
+                    return Helper.r(p1, station).CompareTo(Helper.r(p2, station));
+                }
+                return theta1.CompareTo(theta2);
+            });
+            /*
+                        foreach (var star in stars)
+                        {
+                            Console.WriteLine(star);
+                        }
+                        */
+        }
+
+        public List<Point> stars;
     }
 
     class StarMap
@@ -109,7 +220,7 @@ class Solve10 : ISolve
             return true;
         }
 
-        public void Solve()
+        public void FindBestAsteroid()
         {
             foreach (var star in stars)
             {
@@ -156,7 +267,7 @@ class Solve10 : ISolve
         var count = int.Parse(lines[1]);
         var map = lines.Skip(2).ToArray();
         var starMap = StarMap.Parse(map);
-        starMap.Solve();
+        starMap.FindBestAsteroid();
 
         var bestStar = starMap.bestStar;
         return bestStar.X == bestLoc.ElementAt(0) && bestStar.Y == bestLoc.ElementAt(1) && starMap.maxStarsVisible == count;
@@ -168,7 +279,7 @@ class Solve10 : ISolve
         {
             var lines = File.ReadAllLines(Input, Encoding.UTF8);
             var starMap = StarMap.Parse(lines);
-            starMap.Solve();
+            starMap.FindBestAsteroid();
             return starMap.maxStarsVisible.ToString();
         }
         else

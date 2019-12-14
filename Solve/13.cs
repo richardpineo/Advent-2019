@@ -13,11 +13,19 @@ class Solve13 : ISolve
 
     const string Input = "Input//13.txt";
 
+    enum Tile
+    {
+        Empty = 0,
+        Wall = 1,
+        Block = 2,
+        Paddle = 3,
+        Ball = 4
+    };
+
     public bool Prove(bool isA)
     {
         return true;
     }
-
 
     public string Solve(bool isA)
     {
@@ -50,7 +58,7 @@ class Solve13 : ISolve
         int count = 0;
         for (int i = 2; i < outputs.Count; i += 3)
         {
-            if (outputs[i] == 2)
+            if (outputs[i] == (IntType)Tile.Block)
             {
                 count++;
             }
@@ -84,19 +92,19 @@ class Solve13 : ISolve
                     {
                         score = other;
                     }
-                    else if (other == 3)
+                    else if (other == (IntType)Tile.Paddle)
                     {
                         paddlePos = x;
                     }
-                    else if (other == 4)
+                    else if (other == (IntType)Tile.Ball)
                     {
                         ballPos = x;
                     }
+                    // -1, 0, 1 for movement based on ball, paddle position.
                     state.input = ballPos.CompareTo(paddlePos);
                     outputs.Clear();
                 }
             }
-
         }
         return score.ToString();
     }

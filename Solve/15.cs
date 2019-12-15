@@ -129,7 +129,7 @@ class Solve15 : ISolve
         // Console.WriteLine("".PadLeft(depth) + s);
     }
 
-    void MapIt(Intcode.State initialState, Point currentLoc, ref List<Point> cells, ref Point oxygenCell, int depth)
+    void MapIt(Intcode.State initialState, Point currentLoc, ref HashSet<Point> cells, ref Point oxygenCell, int depth)
     {
         foreach (Movement m in Enum.GetValues(typeof(Movement)))
         {
@@ -181,7 +181,7 @@ class Solve15 : ISolve
         var program = Intcode.ParseInput(lines[0]);
         var state = new Intcode.State(program);
         var currentLoc = new Point(0, 0);
-        var cells = new List<Point>();
+        var cells = new HashSet<Point>();
         cells.Add(currentLoc);
         var oxygenCell = new Point(-1000, -1000);
         MapIt(state, currentLoc, ref cells, ref oxygenCell, 0);

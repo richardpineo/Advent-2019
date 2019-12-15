@@ -3,12 +3,67 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using System.Diagnostics;
 
-
+[DebuggerDisplay("({reactions.Length} reactions)")]
 class Factory
 {
-    public Factory(string[] lines)
+    private Factory()
     {
+
+    }
+
+    [DebuggerDisplay("{Count} {Id}")]
+    class Component
+    {
+        public string Id;
+        public int Count;
+
+        public static Component Parse(string s)
+        {
+            var tokens = s.Split(" ");
+            if (tokens.Count() != 2)
+            {
+                return null;
+            }
+            var component = new Component();
+            component.Count = int.Parse(tokens[0]);
+            component.Id = tokens[1];
+            return component;
+        }
+    }
+
+    [DebuggerDisplay("{Inputs.Length} Inputs -> {Output}")]
+    class Reaction
+    {
+        public Component[] Inputs;
+        public Component Output;
+    }
+
+    private Reaction[] reactions;
+
+    public static Factory Parse(string[] lines)
+    {
+        // Each line has the form:
+        // [<val> name], => <val name>
+        var reactions = new List<Reaction>();
+        foreach (string line in lines)
+        {
+            var leftRight = line.Split(" => ");
+            if (leftRight.Count() != 2)
+            {
+                return null;
+            }
+
+            var ingredients = leftRight[0].Split(",").Select(s => s.Trim());
+            var output = leftRight[1].Trim();
+            var reaction = new Reaction();
+            reaction.Inputs = ingredients.Select(i => Component.Parse(i)).ToArray();
+            reaction.Output = Component.Parse(output);
+            reactions.Add(reaction);
+        }
+        var factory = new Factory() { reactions = reactions.ToArray() };
+        return factory;
     }
 
     public int Solve()
@@ -41,7 +96,7 @@ class Solve14 : ISolve
             var lines = File.ReadAllLines(example, Encoding.UTF8);
             var answer = int.Parse(lines[0]);
             var input = lines.Skip(1);
-            var factory = new Factory(input.ToArray());
+            var factory = Factory.Parse(input.ToArray());
             var possible = factory.Solve();
             if (possible != answer)
             {

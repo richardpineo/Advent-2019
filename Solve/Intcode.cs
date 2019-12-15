@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using IntType = System.Int64;
+using System.Linq;
 
 class Intcode
 {
@@ -30,6 +31,17 @@ class Intcode
         public IntType pos = 0;
         private Dictionary<IntType, IntType> memory = new Dictionary<IntType, IntType>();
         public IntType relativeBase;
+
+        public static State Clone(State s)
+        {
+            var clone = new State(new IntType[] { });
+            clone.output = s.output;
+            clone.input = s.input;
+            clone.pos = s.pos;
+            clone.relativeBase = s.relativeBase;
+            clone.memory = new Dictionary<IntType, IntType>(s.memory);
+            return clone;
+        }
 
         public IntType? PopOutput()
         {

@@ -16,14 +16,14 @@ class Factory
     [DebuggerDisplay("{Count} {Id}")]
     class Component
     {
-        public Component(string id, int count)
+        public Component(string id, long count)
         {
             Id = id;
             Count = count;
         }
 
         public string Id;
-        public int Count;
+        public long Count;
 
         public static Component Parse(string s)
         {
@@ -32,7 +32,7 @@ class Factory
             {
                 return null;
             }
-            return new Component(tokens[1], int.Parse(tokens[0]));
+            return new Component(tokens[1], long.Parse(tokens[0]));
         }
     }
 
@@ -69,19 +69,19 @@ class Factory
         return factory;
     }
 
-    public int Solve()
+    public long Solve(long numFuel)
     {
-        var oreUsed = 0;
-        var stock = new Dictionary<string, int>();
+        long oreUsed = 0;
+        var stock = new Dictionary<string, long>();
         var needed = new Queue<Component>();
-        needed.Enqueue(new Component("FUEL", 1));
+        needed.Enqueue(new Component("FUEL", numFuel));
 
         while (needed.Count > 0)
         {
             var toMake = needed.Dequeue();
 
             // Take from stock if possible.
-            var onHand = 0;
+            long onHand = 0;
             stock.TryGetValue(toMake.Id, out onHand);
             if (onHand > toMake.Count)
             {
@@ -143,13 +143,18 @@ class Solve14 : ISolve
 
     public bool Prove(bool isA)
     {
+        return isA ? ProveA() : ProveB();
+    }
+
+    public bool ProveA()
+    {
         foreach (string example in Examples)
         {
             var lines = File.ReadAllLines(example, Encoding.UTF8);
-            var answer = int.Parse(lines[0]);
+            var answer = long.Parse(lines[0]);
             var input = lines.Skip(1);
             var factory = Factory.Parse(input.ToArray());
-            var possible = factory.Solve();
+            var possible = factory.Solve(1);
             if (possible != answer)
             {
                 Console.WriteLine($"Example {example} failed: got {possible}, expected {answer}");
@@ -169,11 +174,83 @@ class Solve14 : ISolve
     {
         var lines = File.ReadAllLines(Input, Encoding.UTF8);
         var factory = Factory.Parse(lines.ToArray());
-        return factory.Solve().ToString();
+        return factory.Solve(1).ToString();
     }
 
     public string SolveB()
     {
-        return "NotImpl";
+        var lines = File.ReadAllLines(Input, Encoding.UTF8);
+        var factory = Factory.Parse(lines.ToArray());
+
+        // Find cost of one then hone in on it.
+        var oreForOne = factory.Solve(1);
+
+        var target = 1000000000000;
+        var fuelLowerBound = target / oreForOne;
+        var fuelUpperBound = fuelLowerBound * 2;
+
+        var lower = factory.Solve(fuelLowerBound);
+        var upper = factory.Solve(fuelUpperBound);
+
+        long possible = BinarySearch(factory.Solve, target, fuelLowerBound, fuelUpperBound);
+        return possible.ToString();
+    }
+
+    // https://stackoverflow.com/questions/49843710/binary-search-closest-value-c-sharp
+    public static long BinarySearch(Func<long, long> eval, long item, long min, long max)
+    {
+        long first = min;
+        long last = max;
+        long mid = 0;
+        do
+        {
+            mid = first + (last - first) / 2;
+            var value = eval(mid);
+            if (item > value)
+                first = mid + 1;
+            else
+                last = mid - 1;
+            if (value == item)
+                return mid;
+        } while (first <= last);
+        return last;
+    }
+
+    public bool ProveB()
+    {
+        string[] Examples = new string[] {
+                "Examples//14b-3.txt",
+                "Examples//14b-4.txt",
+                "Examples//14b-5.txt",
+            };
+
+        foreach (string example in Examples)
+        {
+            var lines = File.ReadAllLines(example, Encoding.UTF8);
+            var answerA = int.Parse(lines[0]);
+            var fuelProduced = int.Parse(lines[1]);
+            var input = lines.Skip(2);
+            var factory = Factory.Parse(input.ToArray());
+
+            // Find cost of one then hone in on it.
+            var oreForOne = factory.Solve(1);
+
+            var target = 1000000000000;
+            var fuelLowerBound = target / oreForOne;
+            var fuelUpperBound = fuelLowerBound * 2;
+
+            var lower = factory.Solve(fuelLowerBound);
+            var upper = factory.Solve(fuelUpperBound);
+
+            long possible = BinarySearch(factory.Solve, target, fuelLowerBound, fuelUpperBound);
+
+            if (possible != fuelProduced)
+            {
+                Console.WriteLine($"Example {example} failed: got {possible}, expected {fuelProduced}");
+                return false;
+            }
+        }
+
+        return true;
     }
 }

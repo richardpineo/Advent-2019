@@ -119,7 +119,6 @@ class Factory
             }
         }
 
-        // Basically just work backwards from one fuel.
         return oreUsed;
     }
 }
@@ -133,13 +132,6 @@ class Solve14 : ISolve
 
     const string Input = "Input//14.txt";
 
-    string[] Examples = new string[] {
-        "Examples//14a-1.txt",
-        "Examples//14a-2.txt",
-        "Examples//14a-3.txt",
-        "Examples//14a-4.txt",
-        "Examples//14a-5.txt",
-    };
 
     public bool Prove(bool isA)
     {
@@ -148,6 +140,14 @@ class Solve14 : ISolve
 
     public bool ProveA()
     {
+        string[] Examples = new string[] {
+            "Examples//14a-1.txt",
+            "Examples//14a-2.txt",
+            "Examples//14a-3.txt",
+            "Examples//14a-4.txt",
+            "Examples//14a-5.txt",
+        };
+
         foreach (string example in Examples)
         {
             var lines = File.ReadAllLines(example, Encoding.UTF8);
@@ -158,6 +158,44 @@ class Solve14 : ISolve
             if (possible != answer)
             {
                 Console.WriteLine($"Example {example} failed: got {possible}, expected {answer}");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public bool ProveB()
+    {
+        string[] Examples = new string[] {
+                "Examples//14b-3.txt",
+                "Examples//14b-4.txt",
+                "Examples//14b-5.txt",
+            };
+
+        foreach (string example in Examples)
+        {
+            var lines = File.ReadAllLines(example, Encoding.UTF8);
+            var answerA = int.Parse(lines[0]);
+            var fuelProduced = int.Parse(lines[1]);
+            var input = lines.Skip(2);
+            var factory = Factory.Parse(input.ToArray());
+
+            // Find cost of one then hone in on it.
+            var oreForOne = factory.Solve(1);
+
+            var target = 1000000000000;
+            var fuelLowerBound = target / oreForOne;
+            var fuelUpperBound = fuelLowerBound * 2;
+
+            var lower = factory.Solve(fuelLowerBound);
+            var upper = factory.Solve(fuelUpperBound);
+
+            long possible = BinarySearch(factory.Solve, target, fuelLowerBound, fuelUpperBound);
+
+            if (possible != fuelProduced)
+            {
+                Console.WriteLine($"Example {example} failed: got {possible}, expected {fuelProduced}");
                 return false;
             }
         }
@@ -214,43 +252,5 @@ class Solve14 : ISolve
                 return mid;
         } while (first <= last);
         return last;
-    }
-
-    public bool ProveB()
-    {
-        string[] Examples = new string[] {
-                "Examples//14b-3.txt",
-                "Examples//14b-4.txt",
-                "Examples//14b-5.txt",
-            };
-
-        foreach (string example in Examples)
-        {
-            var lines = File.ReadAllLines(example, Encoding.UTF8);
-            var answerA = int.Parse(lines[0]);
-            var fuelProduced = int.Parse(lines[1]);
-            var input = lines.Skip(2);
-            var factory = Factory.Parse(input.ToArray());
-
-            // Find cost of one then hone in on it.
-            var oreForOne = factory.Solve(1);
-
-            var target = 1000000000000;
-            var fuelLowerBound = target / oreForOne;
-            var fuelUpperBound = fuelLowerBound * 2;
-
-            var lower = factory.Solve(fuelLowerBound);
-            var upper = factory.Solve(fuelUpperBound);
-
-            long possible = BinarySearch(factory.Solve, target, fuelLowerBound, fuelUpperBound);
-
-            if (possible != fuelProduced)
-            {
-                Console.WriteLine($"Example {example} failed: got {possible}, expected {fuelProduced}");
-                return false;
-            }
-        }
-
-        return true;
     }
 }

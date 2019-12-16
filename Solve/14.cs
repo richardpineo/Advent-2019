@@ -16,6 +16,12 @@ class Factory
     [DebuggerDisplay("{Count} {Id}")]
     class Component
     {
+        public Component(string id, int count)
+        {
+            Id = id;
+            Count = count;
+        }
+
         public string Id;
         public int Count;
 
@@ -26,10 +32,7 @@ class Factory
             {
                 return null;
             }
-            var component = new Component();
-            component.Count = int.Parse(tokens[0]);
-            component.Id = tokens[1];
-            return component;
+            return new Component(tokens[1], int.Parse(tokens[0]));
         }
     }
 
@@ -68,7 +71,56 @@ class Factory
 
     public int Solve()
     {
-        return 0;
+        var oreUsed = 0;
+        var stock = new Dictionary<string, int>();
+        var needed = new Queue<Component>();
+        needed.Enqueue(new Component("FUEL", 1));
+
+        while (needed.Count > 0)
+        {
+            var toMake = needed.Dequeue();
+
+            // Take from stock if possible.
+            var onHand = 0;
+            stock.TryGetValue(toMake.Id, out onHand);
+            if (onHand > toMake.Count)
+            {
+                stock[toMake.Id] = onHand - toMake.Count;
+            }
+            else
+            {
+                // figure out what we need to make the thing.
+                var toMakeAmount = toMake.Count - onHand;
+
+                var reaction = reactions.First(r => r.Output.Id == toMake.Id);
+                var numNeeded = toMakeAmount / reaction.Output.Count;
+                var leftover = toMakeAmount % reaction.Output.Count;
+                if (leftover != 0)
+                {
+                    numNeeded += 1;
+                    leftover = reaction.Output.Count - leftover;
+                }
+
+                stock[toMake.Id] = leftover;
+
+                // components
+                var neededComponents = reaction.Inputs.Select(i => new Component(i.Id, i.Count * numNeeded));
+                foreach (var c in neededComponents)
+                {
+                    if (c.Id == "ORE")
+                    {
+                        oreUsed += c.Count;
+                    }
+                    else
+                    {
+                        needed.Enqueue(c);
+                    }
+                }
+            }
+        }
+
+        // Basically just work backwards from one fuel.
+        return oreUsed;
     }
 }
 
@@ -115,8 +167,11 @@ class Solve14 : ISolve
 
     public string SolveA()
     {
-        return "NotImpl";
+        var lines = File.ReadAllLines(Input, Encoding.UTF8);
+        var factory = Factory.Parse(lines.ToArray());
+        return factory.Solve().ToString();
     }
+
     public string SolveB()
     {
         return "NotImpl";

@@ -40,6 +40,7 @@ namespace AOC2019
             var failed = new List<ISolve>();
             var timeForAll = new Stopwatch();
             timeForAll.Start();
+            var timeForEach = new Dictionary<ISolve, long>();
             foreach (var solve in toSolve)
             {
                 var stopwatch = new Stopwatch();
@@ -54,11 +55,20 @@ namespace AOC2019
                 {
                     failed.Add(solve);
                 }
-                Console.WriteLine($"    {stopwatch.ElapsedMilliseconds} ms");
+                var elapsed = stopwatch.ElapsedMilliseconds;
+                timeForEach[solve] = elapsed;
                 Console.WriteLine();
             }
 
-            Console.WriteLine($"Total Time: {timeForAll.ElapsedMilliseconds} ms");
+            var padding = 8;
+            foreach (var t in timeForEach)
+            {
+                var timing = t.Value.ToString().PadLeft(padding) + " ms";
+                Console.WriteLine($"{timing}   {t.Key.Description()}");
+            }
+            Console.WriteLine($"{"-----------".PadLeft(padding)}   ------");
+            var allTiming = timeForAll.ElapsedMilliseconds.ToString().PadLeft(padding) + " ms";
+            Console.WriteLine($"{allTiming}   Total");
             Console.WriteLine();
 
             if (failed.Count > 0)

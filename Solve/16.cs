@@ -37,13 +37,7 @@ class Solve16 : ISolve
 
             foreach (var test in tests)
             {
-                var chars = test.Input.ToCharArray();
-                var input = chars.Select(s => int.Parse(s.ToString())).ToArray();
-                for (var i = 0; i < test.NumberOfPhases; i++)
-                {
-                    input = Apply(input);
-                }
-                var answer = string.Join("", input);
+                var answer = ApplyFinal(test.Input, test.NumberOfPhases);
                 if (test.Answer != answer)
                 {
                     Console.WriteLine($"Expected {test.Answer}, got {answer}");
@@ -58,15 +52,27 @@ class Solve16 : ISolve
         0,1,0,-1
     };
 
+    private string ApplyFinal(string inputString, int numberOfPhases)
+    {
+        var chars = inputString.ToCharArray();
+        var input = chars.Select(s => int.Parse(s.ToString())).ToArray();
+        for (var i = 0; i < numberOfPhases; i++)
+        {
+            input = Apply(input);
+        }
+        var answer = string.Join("", input).Substring(0, 8);
+        return answer;
+    }
+
     private int[] Apply(int[] input)
     {
         var answer = new int[input.Length];
         for (int outIndex = 0; outIndex < input.Length; outIndex++)
         {
             var val = 0;
-            for (int inputIndex = 0; inputIndex < input.Length; inputIndex++)
+            for (int inputIndex = outIndex; inputIndex < input.Length; inputIndex++)
             {
-                var factor = patternVal(outIndex, inputIndex);
+                var factor = patternVal(inputIndex, outIndex);
                 val += input[inputIndex] * factor;
             }
             answer[outIndex] = Math.Abs(val) % 10;

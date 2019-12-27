@@ -40,21 +40,26 @@ class Solve17 : ISolve
             "..#...#...#..",
             "..#####...^.."
         };
-        var rows = example[0].Length;
-        var cols = example.Length;
+        var answer = AlignmentValue(example);
+        return answer == 76;
+    }
+
+    private int AlignmentValue(string[] input)
+    {
+        var rows = input[0].Length;
+        var cols = input.Length;
         var environment = new Dictionary<Point, Values>();
         for (int row = 0; row < rows; row++)
         {
             for (int col = 0; col < cols; col++)
             {
-                environment[new Point(row, col)] = (Values)example[col][row];
+                environment[new Point(row, col)] = (Values)input[col][row];
             }
         }
 
         var intersections = FindIntersections(environment, rows, cols);
         var answer = intersections.Sum(p => p.X * p.Y);
-
-        return answer == 76;
+        return answer;
     }
 
     private Point[] FindIntersections(Dictionary<Point, Values> environment, int numRows, int numCols)

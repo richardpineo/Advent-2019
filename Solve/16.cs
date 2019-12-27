@@ -22,9 +22,12 @@ class Solve16 : ISolve
 
     public bool Prove(bool isA)
     {
-        if (isA)
-        {
-            var tests = new Test[] {
+        return isA ? ProveA() : ProveB();
+    }
+
+    private bool ProveA()
+    {
+        var tests = new Test[] {
                 new Test() { Input = "12345678", Answer = "12345678", NumberOfPhases = 0 },
                 new Test() { Input = "12345678", Answer = "48226158", NumberOfPhases = 1 },
                 new Test() { Input = "12345678", Answer = "34040438", NumberOfPhases = 2 },
@@ -35,16 +38,48 @@ class Solve16 : ISolve
                 new Test() { Input = "69317163492948606335995924319873", Answer = "52432133", NumberOfPhases = 100 }
             };
 
-            foreach (var test in tests)
+        foreach (var test in tests)
+        {
+            var answer = ApplyFinal(test.Input.ToCharArray(), test.NumberOfPhases).Substring(0, 8);
+            if (test.Answer != answer)
             {
-                var answer = ApplyFinal(test.Input, test.NumberOfPhases);
-                if (test.Answer != answer)
-                {
-                    Console.WriteLine($"Expected {test.Answer}, got {answer}");
-                    return false;
-                }
+                Console.WriteLine($"Expected {test.Answer}, got {answer}");
+                return false;
             }
         }
+        return true;
+    }
+
+    private bool ProveB()
+    {
+        var tests = new Test[] {
+            new Test() { Input = "03036732577212944063491565474664", Answer = "84462026", NumberOfPhases = 100 },
+            new Test() { Input = "02935109699940807407585447034323", Answer = "78725270", NumberOfPhases = 100 },
+            new Test() { Input = "03081770884921959731165446850517", Answer = "53553731", NumberOfPhases = 100 }
+        };
+
+        foreach (var test in tests)
+        {
+            var pos = int.Parse(test.Input.Substring(0, 7));
+            var chars = test.Input.ToCharArray();
+            var realInput = new char[10000 * chars.Length];
+            for (int i = 0; i < 10000; i++)
+            {
+                for (int j = 0; j < chars.Length; j++)
+                {
+                    realInput[i * chars.Length + j] = chars[j];
+                }
+            }
+            // var answer = ApplyFinal(realInput, 100);
+            // var finalAnswer = answer.Substring(pos, 8);
+            var finalAnswer = "NotImpl";
+            if (test.Answer != finalAnswer)
+            {
+                Console.WriteLine($"Expected {test.Answer}, got {finalAnswer}");
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -52,15 +87,14 @@ class Solve16 : ISolve
         0,1,0,-1
     };
 
-    private string ApplyFinal(string inputString, int numberOfPhases)
+    private string ApplyFinal(char[] chars, int numberOfPhases)
     {
-        var chars = inputString.ToCharArray();
         var input = chars.Select(s => int.Parse(s.ToString())).ToArray();
         for (var i = 0; i < numberOfPhases; i++)
         {
             input = Apply(input);
         }
-        var answer = string.Join("", input).Substring(0, 8);
+        var answer = string.Join("", input);
         return answer;
     }
 
@@ -93,7 +127,7 @@ class Solve16 : ISolve
     public string SolveA()
     {
         var input = File.ReadAllLines(Input, Encoding.UTF8)[0];
-        var answer = ApplyFinal(input, 100);
+        var answer = ApplyFinal(input.ToCharArray(), 100).Substring(0, 8);
         return answer;
     }
 

@@ -93,7 +93,8 @@ class Solve16 : ISolve
     public string SolveA()
     {
         var input = File.ReadAllLines(Input, Encoding.UTF8)[0];
-        return "not impl";
+        var answer = ApplyFinal(input, 100);
+        return answer;
     }
 
     public string SolveB()

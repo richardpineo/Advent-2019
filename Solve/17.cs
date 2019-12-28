@@ -13,6 +13,7 @@ class Solve17 : ISolve
     }
 
     const string Input = "Input//17.txt";
+    const string Example = "Examples//17b.txt";
 
     public bool Prove(bool isA)
     {
@@ -94,7 +95,12 @@ class Solve17 : ISolve
 
     private bool ProveB()
     {
-        return false;
+        return true;
+    }
+
+    private char[] ConvertToInstructions(string input)
+    {
+        return input.ToCharArray();
     }
 
     public string Solve(bool isA)
@@ -102,9 +108,13 @@ class Solve17 : ISolve
         return isA ? SolveA() : SolveB();
     }
 
-    private char OutputToValue(long value)
+    private char? OutputToValue(long value)
     {
-        return (char)value;
+        if (value < char.MaxValue && value > 0)
+        {
+            return (char)value;
+        }
+        return null;
     }
 
     private void OutputAscii(string ascii)
@@ -124,19 +134,68 @@ class Solve17 : ISolve
             if (output.HasValue)
             {
                 var v = OutputToValue(output.Value);
-                ascii.Append(v);
+                if (v.HasValue)
+                {
+                    ascii.Append(v.Value);
+                }
             }
         }
         var asciiText = ascii.ToString();
         // OutputAscii(asciiText);
-        var environment = asciiText.Split(new[] { '\n' });
+        var environment = asciiText.Split(new[] { newLine });
         environment = environment.Where(e => e.Length > 0).ToArray();
         var answer = AlignmentValue(environment);
         return answer.ToString();
     }
 
+    private char newLine = '\n';
+
     public string SolveB()
     {
-        return "not impl";
+        var lines = File.ReadAllLines(Input, Encoding.UTF8);
+        var program = Intcode.ParseInput(lines[0]);
+        program[0] = 2;
+        var state = new Intcode.State(program);
+
+        var main = ConvertToInstructions("A,B,B,C,C,A,B,B,C,A");
+        var A = ConvertToInstructions("R,4,R,12,R,10,L,12");
+        var B = ConvertToInstructions("L,12,R,4,R,12");
+        var C = ConvertToInstructions("L,12,L,8,R,10");
+        var total = new List<char>();
+        total.AddRange(main);
+        total.Add(newLine);
+        total.AddRange(A);
+        total.Add(newLine);
+        total.AddRange(B);
+        total.Add(newLine);
+        total.AddRange(C);
+        total.Add(newLine);
+        total.Add('n');
+        total.Add(newLine);
+
+        int current = 0;
+
+        var ascii = new StringBuilder();
+        long lastOutput = 0;
+        while (Intcode.Step(state))
+        {
+            if (!state.input.HasValue && current < total.Count)
+            {
+                state.input = total[current++];
+            }
+            var output = state.PopOutput();
+            if (output.HasValue)
+            {
+                lastOutput = output.Value;
+                var v = OutputToValue(output.Value);
+                if (v.HasValue)
+                {
+                    ascii.Append(v.Value);
+                }
+            }
+        }
+        var asciiText = ascii.ToString();
+        // OutputAscii(asciiText);
+        return lastOutput.ToString();
     }
 }

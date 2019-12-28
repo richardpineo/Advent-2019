@@ -102,9 +102,37 @@ class Solve17 : ISolve
         return isA ? SolveA() : SolveB();
     }
 
+    private char OutputToValue(long value)
+    {
+        return (char)value;
+    }
+
+    private void OutputAscii(string ascii)
+    {
+        Console.Write(ascii);
+    }
+
     public string SolveA()
     {
-        return "not impl";
+        var lines = File.ReadAllLines(Input, Encoding.UTF8);
+        var program = Intcode.ParseInput(lines[0]);
+        var state = new Intcode.State(program);
+        var ascii = new StringBuilder();
+        while (Intcode.Step(state))
+        {
+            var output = state.PopOutput();
+            if (output.HasValue)
+            {
+                var v = OutputToValue(output.Value);
+                ascii.Append(v);
+            }
+        }
+        var asciiText = ascii.ToString();
+        // OutputAscii(asciiText);
+        var environment = asciiText.Split(new[] { '\n' });
+        environment = environment.Where(e => e.Length > 0).ToArray();
+        var answer = AlignmentValue(environment);
+        return answer.ToString();
     }
 
     public string SolveB()

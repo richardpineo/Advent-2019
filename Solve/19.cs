@@ -22,21 +22,7 @@ class Solve19 : ISolve
 
     public bool ProveB()
     {
-        Console.WriteLine();
-        // x = col+1
-        // y = ln
-        // var example1 = CalculateAnswer("example 1", new Point(35, 20), new Point(25, 30), 10);
-        // var example2 = CalculateAnswer("example 2", new Point(42, 24), new Point(30, 36), 10);
-
-        //var real1 = CalculateAnswer("real 1   ", new Point(39, 23), new Point(33, 35), 100);
-        //var real2 = CalculateAnswer("real 2   ", new Point(36, 21), new Point(26, 31), 100);
-
-        var real3 = CalculateAnswer("real 150   ", new Point(150, 119), new Point(150, 143), 99);
-        Console.WriteLine($"Is it {real3.X * 10000 + real3.Y}");
-        // var real4 = CalculateAnswer("real 150   ", new Point(151, 119), new Point(151, 143), 100);
-        // var real5 = CalculateAnswer("real 200   ", new Point(201, 158), new Point(201, 191), 100);
         return true;
-        // answerProve == new Point(25, 20);
     }
 
     public string Solve(bool isA)
@@ -81,7 +67,7 @@ class Solve19 : ISolve
         throw new Exception("Whaaaa?");
     }
 
-    Point CalculateAnswer(string desc, Point p1, Point p2, int dimension)
+    Point CalculateAnswer(IntType[] program, Point p1, Point p2, int dimension)
     {
         var m1 = (double)p1.Y / (double)p1.X;
         var m2 = (double)p2.Y / (double)p2.X;
@@ -90,19 +76,11 @@ class Solve19 : ISolve
         var y1 = m1 * (x1 + (double)dimension);
 
         var p = new Point((int)Math.Round(x1), (int)Math.Round(y1));
-        Console.WriteLine($"{desc}: p1: {p1}, p2: {p2}, m1: {m1}, m2: {m2}, ({x1},{y1}), final: {p}");
+        // Console.WriteLine($"p1: {p1}, p2: {p2}, m1: {m1}, m2: {m2}, ({x1},{y1}), final: {p}");
 
-        // CheckFinal(p, dimension);
-        // CheckFinal(new Point(p.X - 1, p.Y - 1), dimension);
-        //  CheckFinal(new Point(p.X - 2, p.Y - 2), dimension);
-        //CheckFinal(new Point(p.X - 3, p.Y - 3), dimension);
-        //CheckFinal(new Point(p.X - 4, p.Y - 4), dimension);
-        //CheckFinal(new Point(p.X - 5, p.Y - 5), dimension);
-        // CheckFinal(new Point(p.X, p.Y), dimension);
-
-
+        // Dumb as bricks: just search around it. 
         var tries = new List<Point>();
-        var buf = 100;
+        var buf = 75;
         for (var x = p.X - buf; x < p.X + buf; x++)
         {
             for (var y = p.Y - buf; y < p.Y + buf; y++)
@@ -113,7 +91,7 @@ class Solve19 : ISolve
         var sorted = tries.OrderBy(t => t.X + t.Y);
         foreach (var t in sorted)
         {
-            if (CheckSimple(t, dimension))
+            if (CheckSimple(program, t, dimension))
             {
                 return t;
             }
@@ -122,104 +100,40 @@ class Solve19 : ISolve
         return p;
     }
 
-    bool CheckSimple(Point p, int dimension)
+    bool CheckSimple(IntType[] program, Point p, int dimension)
     {
         var c1 = p;
         var c2 = new Point(p.X + dimension, p.Y);
         var c3 = new Point(p.X, p.Y + dimension);
         var c4 = new Point(p.X + dimension, p.Y + dimension);
 
-        return Check(c1, true) &&
-            Check(c2, true) &&
-            Check(c3, true) &&
-            Check(c4, true);
+        return Check(program, c1, true) &&
+            Check(program, c2, true) &&
+            Check(program, c3, true) &&
+            Check(program, c4, true);
     }
 
-    void CheckFinal(Point p, int dimension)
+    bool Check(IntType[] program, Point point, bool isOn)
     {
-
-        var c1 = p;
-        var c2 = new Point(p.X + dimension - 1, p.Y);
-        var c3 = new Point(p.X, p.Y + dimension - 1);
-        var c4 = new Point(p.X + dimension - 1, p.Y + dimension - 1);
-
-
-        var lines = File.ReadAllLines(Input, Encoding.UTF8);
-        var program = Intcode.ParseInput(lines[0]);
-        var tractor = new Dictionary<Point, bool>();
-
-        for (var x = p.X - 10; x < p.X + dimension + 10; x++)
-        {
-            for (var y = p.Y - 10; y < p.Y + dimension + 10; y++)
-            {
-                tractor[new Point(x, y)] = IsTractorOn(program, x, y);
-            }
-        }
-        DumpTractor(tractor);
-
-        Console.WriteLine($"{c1} {c2} {c3} {c4}");
-
-        Console.WriteLine("Corners:");
-        Check(c1, true);
-        Check(c2, true);
-        Check(c3, true);
-        Check(c4, true);
-
-        Console.WriteLine("Just a bit outside:");
-        Check(new Point(c2.X + 1, c2.Y), false);
-        Check(new Point(c2.X, c2.Y - 1), false);
-        Check(new Point(c3.X - 1, c3.Y), false);
-        Check(new Point(c3.X, c3.Y + 1), false);
-    }
-
-    bool Check(Point point, bool isOn)
-    {
-        var lines = File.ReadAllLines(Input, Encoding.UTF8);
-        var program = Intcode.ParseInput(lines[0]);
         bool tractorOn = IsTractorOn(program, point.X, point.Y);
-        if (isOn != tractorOn)
-        {
-            Console.WriteLine($"{point} Fail. Should be {isOn}, is {tractorOn}");
-        }
-        else
-        {
-            Console.WriteLine($"{point} Success");
-        }
         return isOn == tractorOn;
     }
 
     string SolveB()
     {
-        //CountTractor(200, 200);
+        var lines = File.ReadAllLines(Input, Encoding.UTF8);
+        var program = Intcode.ParseInput(lines[0]);
 
-        //var p1 = new Point(200, 160);
-        //var p2 = new Point(200, 192);
-
-        //var p1 = new Point(100, 80);
-        //var p2 = new Point(100, 96);
-
-        //var real4 = CalculateAnswer("real 4   ", new Point(201, 158), new Point(201, 191), 10);
-        var p1 = new Point(201, 158);
-        var p2 = new Point(201, 191);
-        return "foo";
-
-        var answer = CalculateAnswer("solveb", p1, p2, 100);
-
-
-        var final = answer.X * 10000 + answer.Y;
-
-        Console.WriteLine($"\nAnswer is {answer}: {final}");
-        return (answer.X * 10000 + answer.Y).ToString();
+        var answer = CalculateAnswer(program, new Point(150, 119), new Point(150, 143), 99);
+        return $"{answer.X * 10000 + answer.Y}";
 
         // too low:    9801125
         // NO:        10530911
         // NO:        10880934
-        //            10580916
-        //            10450905
+        // NO:        10580916
+        // ANSWER:    10450905
         // too high:  11125945
         // too high:  11250980
-        // 100093
-        // 
     }
 
     void DumpTractor(Dictionary<Point, bool> tractor)

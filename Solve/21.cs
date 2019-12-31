@@ -19,19 +19,9 @@ class Solve21 : ISolve
         return true;
     }
 
-    private char[] ConvertToInstructions(string input)
-    {
-        return input.ToCharArray();
-    }
-
     public string Solve(bool isA)
     {
         return isA ? SolveA() : SolveB();
-    }
-
-    private void OutputAscii(string ascii)
-    {
-        Console.Write(ascii);
     }
 
     public string SolveA()
@@ -83,12 +73,14 @@ class Solve21 : ISolve
     public string SolveB()
     {
         var instructions = new string[] {
-            "NOT A J",
-            "NOT B T",
-            "OR T J",
-            "NOT C T",
-            "OR T J",
+            "NOT C J",
             "AND D J",
+            "AND H J",
+            "NOT B T",
+            "AND D T",
+            "OR T J",
+            "NOT A T",
+            "OR T J",
             "RUN",
             ""
         };

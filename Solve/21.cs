@@ -36,10 +36,6 @@ class Solve21 : ISolve
 
     public string SolveA()
     {
-        var lines = File.ReadAllLines(Input, Encoding.UTF8);
-        var program = Intcode.ParseInput(lines[0]);
-        var state = new Intcode.State(program);
-
         var instructions = new string[] {
             "NOT A J",
             "NOT B T",
@@ -50,6 +46,14 @@ class Solve21 : ISolve
             "WALK",
             ""
         };
+        return execute(instructions);
+    }
+
+    public string execute(string[] instructions)
+    {
+        var lines = File.ReadAllLines(Input, Encoding.UTF8);
+        var program = Intcode.ParseInput(lines[0]);
+        var state = new Intcode.State(program);
 
         var input = string.Join('\n', instructions);
         var ascii = new List<long>();
@@ -68,13 +72,26 @@ class Solve21 : ISolve
             }
         }
         var lastVal = ascii[ascii.Count - 1];
-        var asciiText = ascii.Select(a => (char)a).Take(ascii.Count - 1);
-        Console.WriteLine(asciiText);
+        if (lastVal < char.MaxValue)
+        {
+            var asciiText = ascii.Select(a => (char)a).Take(ascii.Count - 1);
+            Console.WriteLine(string.Join("", asciiText));
+            return "Sad death";
+        }
         return lastVal.ToString();
     }
-
     public string SolveB()
     {
-        return "";
+        var instructions = new string[] {
+            "NOT A J",
+            "NOT B T",
+            "OR T J",
+            "NOT C T",
+            "OR T J",
+            "AND D J",
+            "RUN",
+            ""
+        };
+        return execute(instructions);
     }
 }

@@ -132,9 +132,33 @@ class Solve22 : ISolve
 
     public string SolveA()
     {
-        List<int> deck = new List<int>();
         var lines = File.ReadAllLines(Input, Encoding.UTF8);
-        return "Sad death";
+        var deck = InitDeck(10007);
+        foreach (var line in lines)
+        {
+            if (line == "deal into new stack")
+            {
+                deck = DealIntoNewStack(deck);
+            }
+            else if (line.Contains("cut"))
+            {
+                var valString = line.TakeLast(line.Length - "cut ".Length);
+                int val = int.Parse(string.Join("", valString));
+                deck = CutN(deck, val);
+            }
+            else if (line.Contains("deal with increment"))
+            {
+                var valString = line.TakeLast(line.Length - "deal with increment ".Length);
+                int val = int.Parse(string.Join("", valString));
+                deck = DealWithIncrementN(deck, val);
+            }
+            else
+            {
+                throw new Exception("Unknown line: " + line);
+            }
+        }
+        int index = Array.FindIndex(deck, 0, c => c == 2019);
+        return index.ToString();
     }
     public string SolveB()
     {

@@ -15,147 +15,85 @@ class Solve22 : ISolve
 
     public bool Prove(bool isA)
     {
-        return isA ? (ProveA() && ProveAFast()) : true;
-    }
-
-    enum Shuffle
-    {
-        DealIntoNewStack,
-        CutN,
-        DealWithIncrementN,
-    };
-
-    public bool ProveA()
-    {
-        var deck = InitDeck(10);
-        var reversed = DealIntoNewStack(deck);
-        var cut3 = CutN(deck, 3);
-        var cutNeg4 = CutN(deck, -4);
-        var incN = DealWithIncrementN(deck, 3);
-
-        var ex1 = DealIntoNewStack(DealIntoNewStack(DealWithIncrementN(deck, 7)));
-
-        var ex2 = DealIntoNewStack(DealWithIncrementN(CutN(deck, 6), 7));
-
-        var ex3 = CutN(DealWithIncrementN(DealWithIncrementN(deck, 7), 9), -2);
-
-        /*
-            deal into new stack
-            cut -2
-            deal with increment 7
-            cut 8
-            cut -4
-            deal with increment 7
-            cut 3
-            deal with increment 9
-            deal with increment 3
-            cut -1
-        */
-        var ex4 =
-            CutN(
-                DealWithIncrementN(
-                    DealWithIncrementN(
-                            CutN(
-                                DealWithIncrementN(
-                                    CutN(
-                                        CutN(
-                                            DealWithIncrementN(
-                                                CutN(
-                                                    DealIntoNewStack(deck),
-                                                -2),
-                                            7),
-                                        8),
-                                    -4),
-                                7),
-                            3),
-                        9),
-                    3),
-                -1);
-
-        return
-            Expect("0 1 2 3 4 5 6 7 8 9", deck) &&
-            Expect("9 8 7 6 5 4 3 2 1 0", reversed) &&
-            Expect("3 4 5 6 7 8 9 0 1 2", cut3) &&
-            Expect("6 7 8 9 0 1 2 3 4 5", cutNeg4) &&
-            Expect("0 7 4 1 8 5 2 9 6 3", incN) &&
-            Expect("0 3 6 9 2 5 8 1 4 7", ex1) &&
-            Expect("3 0 7 4 1 8 5 2 9 6", ex2) &&
-            Expect("6 3 0 7 4 1 8 5 2 9", ex3) &&
-            Expect("9 2 5 8 1 4 7 0 3 6", ex4);
+        return isA ? (ProveA()) : true;
     }
 
     private long Apply(ShuffleCommand command, long pos, long length, bool invert)
     {
-        switch (command.shuffle)
+        if (invert)
         {
-            case Shuffle.CutN:
-                return invert ? InvertCutN(pos, command.arg, length) : CutN(pos, command.arg, length);
-            case Shuffle.DealIntoNewStack:
-                return invert ? InvertDealIntoNewStack(pos, length) : DealIntoNewStack(pos, length);
-            case Shuffle.DealWithIncrementN:
-                return invert ? InvertDealWithIncrementN(pos, command.arg, length) : DealWithIncrementN(pos, command.arg, length);
+            return 0; // Not impl
         }
-        throw new Exception("Invalid command " + command);
+        else
+        {
+            return mod((command.a * pos + command.b), length);
+        }
     }
 
-    public bool ProveAFast()
+    long modInverse(long a, long m)
     {
-        var length = 10;
-        var pos = 3;
+        a = a % m;
+        for (long x = 1; x < m; x++)
+            if ((a * x) % m == 1)
+                return x;
+        return 1;
+    }
 
-        var reversed = DealIntoNewStack(pos, length);
-        var invertReversed = InvertDealIntoNewStack(reversed, length);
+    // works with negatives.
+    long mod(long x, long m)
+    {
+        long r = x % m;
+        return r < 0 ? (r + m) : r;
+    }
 
-        var cut3 = CutN(pos, 3, length);
-        var invertCut3 = InvertCutN(cut3, 3, length);
+    bool ProveA()
+    {
+        var reversed = new ShuffleCommand[] {
+            DealIntoNewStack()
+        };
 
-        var cutNeg4 = CutN(pos, -4, length);
-        var invertCutNeg4 = InvertCutN(cutNeg4, -4, length);
+        var cut3 = new ShuffleCommand[] {
+            CutN(3)
+        };
+        var cutNeg4 = new ShuffleCommand[] {
+            CutN(-4)
+        };
 
-        var incN = DealWithIncrementN(pos, 3, length);
-        var invertIncN = InvertDealWithIncrementN(incN, 3, length);
+        var incN = new ShuffleCommand[] {
+            DealWithIncrementN(3)
+        };
 
-        var ex1 = DealIntoNewStack(DealIntoNewStack(DealWithIncrementN(pos, 7, length), length), length);
+        var ex1 = new ShuffleCommand[] {
+            DealWithIncrementN(7),
+            DealIntoNewStack(),
+            DealIntoNewStack()
+        };
 
-        var ex2 = DealIntoNewStack(DealWithIncrementN(CutN(pos, 6, length), 7, length), length);
+        var ex2 = new ShuffleCommand[] {
+            CutN(6),
+            DealWithIncrementN(7),
+            DealIntoNewStack()
+        };
+        var ex3 = new ShuffleCommand[] {
+            DealWithIncrementN(7),
+            DealWithIncrementN(9),
+            CutN(-2)
+        };
 
-        var ex3 = CutN(DealWithIncrementN(DealWithIncrementN(pos, 7, length), 9, length), -2, length);
-
-        /*
-            deal into new stack
-            cut -2
-            deal with increment 7
-            cut 8
-            cut -4
-            deal with increment 7
-            cut 3
-            deal with increment 9
-            deal with increment 3
-            cut -1
-        */
-        var ex4 =
-            CutN(
-                DealWithIncrementN(
-                    DealWithIncrementN(
-                            CutN(
-                                DealWithIncrementN(
-                                    CutN(
-                                        CutN(
-                                            DealWithIncrementN(
-                                                CutN(
-                                                    DealIntoNewStack(pos, length),
-                                                -2, length),
-                                            7, length),
-                                        8, length),
-                                    -4, length),
-                                7, length),
-                            3, length),
-                        9, length),
-                    3, length),
-                -1, length);
+        var ex4 = new ShuffleCommand[] {
+            DealIntoNewStack(),
+            CutN(-2),
+            DealWithIncrementN(7),
+            CutN(8),
+            CutN(-4),
+            DealWithIncrementN(7),
+            CutN(3),
+            DealWithIncrementN(9),
+            DealWithIncrementN(3),
+            CutN(-1)
+        };
 
         return
-            Expect(3, pos) &&
             Expect(6, reversed) &&
             Expect(0, cut3) &&
             Expect(7, cutNeg4) &&
@@ -163,153 +101,51 @@ class Solve22 : ISolve
             Expect(1, ex1) &&
             Expect(0, ex2) &&
             Expect(1, ex3) &&
-            Expect(8, ex4) &&
-            Expect(pos, invertReversed) &&
-            Expect(pos, invertCut3) &&
-            Expect(pos, invertCutNeg4) &&
-            Expect(pos, invertIncN);
+            Expect(8, ex4);
     }
 
-    public bool Expect(string expected, long[] deck)
+    bool Expect(long expected, ShuffleCommand[] commands)
     {
-        var got = string.Join(" ", deck);
-        if (got != expected)
+        long length = 10;
+        long initialPos = 3;
+        long pos = initialPos;
+        foreach (var c in commands)
         {
-            Console.WriteLine("\nExpected:\n" + expected + "\nBut got:\n" + got);
+            pos = Apply(c, pos, length, false);
         }
-        return got == expected;
-    }
-    public bool Expect(long got, long expected)
-    {
-        if (got != expected)
+        if (expected != pos)
         {
-            Console.WriteLine("\nExpected:\n" + expected + "\nBut got:\n" + got);
+            Console.WriteLine("\nExpected:\n" + expected + "\nBut got:\n" + pos);
+            return false;
         }
-        return got == expected;
-    }
 
-    public void DumpDeck(string desc, long[] deck)
-    {
-        Console.WriteLine(desc + ": " + string.Join(" ", deck));
-    }
-
-    public long[] InitDeck(long size)
-    {
-        List<long> deck = new List<long>();
-        for (long i = 0; i < size; i++)
+        // Apply backwards
+        /*
+        var backwards = commands.Reverse();
+        foreach (var c in backwards)
         {
-            deck.Add(i);
+            pos = Apply(c, pos, length, true);
         }
-        return deck.ToArray();
-    }
-
-    public long[] DealIntoNewStack(long[] deck)
-    {
-        return deck.Reverse().ToArray();
-    }
-
-    public long DealIntoNewStack(long pos, long length)
-    {
-        return length - pos - 1;
-    }
-
-    public long InvertDealIntoNewStack(long pos, long length)
-    {
-        // Same as the first verse
-        return length - pos - 1;
-    }
-
-    public long[] CutN(long[] deck, int n)
-    {
-        if (n > 0)
+        if (initialPos != pos)
         {
-            return deck.Skip(n).Concat(deck.Take(n)).ToArray();
+            Console.WriteLine("Reversed pos:\n" + initialPos + "\nBut got:\n" + pos);
+            return false;
         }
-        else
-        {
-            return deck.TakeLast(-n).Concat(deck.Take(deck.Length + n)).ToArray();
-        }
+        */
+        return true;
     }
 
-    public long CutN(long pos, long n, long length)
-    {
-        return (pos - n + length) % length;
-    }
-
-    public long InvertCutN(long pos, long n, long length)
-    {
-        return (pos + n + length) % length;
-    }
-
-    public long[] DealWithIncrementN(long[] deck, long n)
-    {
-        long[] newDeck = new long[deck.Length];
-        for (long pos = 0; pos < deck.Length; pos++)
-        {
-            newDeck[(pos * n) % deck.Length] = deck[pos];
-        }
-        return newDeck;
-    }
-    public long DealWithIncrementN(long pos, long n, long length)
-    {
-        return (pos * n) % length;
-    }
-
-    public long InvertDealWithIncrementN(long pos, long n, long length)
-    {
-        return (n * length / pos) % length;
-    }
 
     public string Solve(bool isA)
     {
-        if (isA)
-        {
-            var s1 = SolveA();
-            var s2 = SolveAFast();
-            if (s1 != s2)
-            {
-                return "Failure";
-            }
-            return s1;
-        }
-        return SolveB();
+        return isA ? SolveA() : SolveB();
     }
 
-    public string SolveA()
+    string SolveA()
     {
-        var lines = File.ReadAllLines(Input, Encoding.UTF8);
-        var deck = InitDeck(10007);
-        foreach (var line in lines)
-        {
-            if (line == "deal into new stack")
-            {
-                deck = DealIntoNewStack(deck);
-            }
-            else if (line.Contains("cut"))
-            {
-                var valString = line.TakeLast(line.Length - "cut ".Length);
-                int val = int.Parse(string.Join("", valString));
-                deck = CutN(deck, val);
-            }
-            else if (line.Contains("deal with increment"))
-            {
-                var valString = line.TakeLast(line.Length - "deal with increment ".Length);
-                long val = int.Parse(string.Join("", valString));
-                deck = DealWithIncrementN(deck, val);
-            }
-            else
-            {
-                throw new Exception("Unknown line: " + line);
-            }
-        }
-        long index = Array.FindIndex(deck, 0, c => c == 2019);
-        return index.ToString();
-    }
-    public string SolveAFast()
-    {
-        var commands = ParseInput();
-        long pos = 2019;
         long length = 10007;
+        var commands = ParseInput(length);
+        long pos = 2019;
         foreach (var command in commands)
         {
             pos = Apply(command, pos, length, false);
@@ -319,11 +155,28 @@ class Solve22 : ISolve
 
     struct ShuffleCommand
     {
-        public Shuffle shuffle;
-        public long arg;
+        // ax + b % m
+        // https://codeforces.com/blog/entry/72593
+        public long a;
+        public long b;
     }
 
-    ShuffleCommand[] ParseInput()
+    ShuffleCommand DealIntoNewStack()
+    {
+        return new ShuffleCommand { a = -1, b = -1 };
+    }
+
+    ShuffleCommand CutN(long n)
+    {
+        return new ShuffleCommand { a = 1, b = -n };
+    }
+
+    ShuffleCommand DealWithIncrementN(long n)
+    {
+        return new ShuffleCommand { a = n, b = 0 };
+    }
+
+    ShuffleCommand[] ParseInput(long length)
     {
         var lines = File.ReadAllLines(Input, Encoding.UTF8);
         var commands = new List<ShuffleCommand>();
@@ -331,19 +184,19 @@ class Solve22 : ISolve
         {
             if (line == "deal into new stack")
             {
-                commands.Add(new ShuffleCommand { shuffle = Shuffle.DealIntoNewStack });
+                commands.Add(DealIntoNewStack());
             }
             else if (line.Contains("cut"))
             {
                 var valString = line.TakeLast(line.Length - "cut ".Length);
                 int val = int.Parse(string.Join("", valString));
-                commands.Add(new ShuffleCommand { shuffle = Shuffle.CutN, arg = val });
+                commands.Add(CutN(val));
             }
             else if (line.Contains("deal with increment"))
             {
                 var valString = line.TakeLast(line.Length - "deal with increment ".Length);
                 long val = int.Parse(string.Join("", valString));
-                commands.Add(new ShuffleCommand { shuffle = Shuffle.DealWithIncrementN, arg = val });
+                commands.Add(DealWithIncrementN(val));
             }
             else
             {
@@ -355,12 +208,14 @@ class Solve22 : ISolve
 
     public string SolveB()
     {
+        return "nope";
+        /*
         long length = 119315717514047;
         long repeat = 101741582076661;
         var originalPos = 2020;
         long pos = originalPos;
         long cycle = 0;
-        var commands = ParseInput().Reverse();
+        var commands = ParseInput(length).Reverse();
         for (long r = 0; r < repeat; r++)
         {
             foreach (var command in commands)
@@ -375,5 +230,6 @@ class Solve22 : ISolve
             }
         }
         return pos.ToString();
+        */
     }
 }

@@ -30,7 +30,8 @@ namespace AOC2019
                 // new Solve18(),
                 new Solve19(),
                 new Solve21(),
-                new Solve22()
+                new Solve22(),
+                new Solve24()
             };
 
             ISolve[] toSolve;

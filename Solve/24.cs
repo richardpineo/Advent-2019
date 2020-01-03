@@ -191,7 +191,7 @@ class Solve24 : ISolve
             }
         }
 
-        Dictionary<Index, bool> contents = new Dictionary<Index, bool>();
+        HashSet<Index> bugs = new HashSet<Index>();
 
         public bool GetContent(Index index)
         {
@@ -199,19 +199,19 @@ class Solve24 : ISolve
             {
                 return false;
             }
-            var content = contents.GetValueOrDefault(index);
+            var content = bugs.Contains(index);
             return content;
         }
         public void SetContent(Index index, bool content)
         {
-            contents[index] = content;
+            bugs.Add(index);
         }
 
         public int BugCount
         {
             get
             {
-                return contents.Count;
+                return bugs.Count;
             }
         }
 
@@ -343,7 +343,7 @@ class Solve24 : ISolve
 
         Index[] IndicesWithBugs()
         {
-            return contents.Where(p => p.Value).Select(s => s.Key).ToArray();
+            return bugs.ToArray();
         }
 
         public MultiEris Iterate()

@@ -1,0 +1,8 @@
+antenna
+boulder
+cake
+coin
+fuel cell
+mutex
+pointer
+tambourine

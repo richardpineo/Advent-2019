@@ -56,7 +56,11 @@ class Solve23 : ISolve
             // Make sure the input is set to something.
             if (!state.input.HasValue)
             {
-                if (queue.Count > 0)
+                if (Idle)
+                {
+                    state.input = -1;
+                }
+                else
                 {
                     var packet = queue.Peek();
                     if (packet.SentX)
@@ -69,10 +73,6 @@ class Solve23 : ISolve
                         packet.SentX = true;
                         state.input = packet.X;
                     }
-                }
-                else
-                {
-                    state.input = -1;
                 }
             }
 
@@ -105,8 +105,16 @@ class Solve23 : ISolve
             }
         }
 
+        public bool Idle
+        {
+            get
+            {
+                return queue.Count == 0;
+            }
+        }
+
         private Queue<Packet> queue = new Queue<Packet>();
-        public Intcode.State state;
+        private Intcode.State state;
         private PacketToSend toSend;
         private Action<PacketToSend> packetSender;
     }
@@ -147,8 +155,69 @@ class Solve23 : ISolve
         return answer.Value.ToString();
     }
 
+    class Nat
+    {
+        public void Receive(Packet packet)
+        {
+            current = packet;
+        }
+
+        public Packet current;
+    }
+
     public string SolveB()
     {
-        return "NotImpl";
+        var lines = File.ReadAllLines(Input, Encoding.UTF8);
+        var program = Intcode.ParseInput(lines[0]);
+
+        var computerBank = new Computer[50];
+        const int numComputers = 50;
+
+        var nat = new Nat();
+
+        long lastY = -666;
+        long? answer = null;
+        Action<PacketToSend> packetSender = (PacketToSend packet) =>
+        {
+            if (packet.Destination == 255)
+            {
+                nat.Receive(packet.ToSend);
+
+                // Is anything processing?
+                bool idle = computerBank.All(c => c.Idle);
+
+                if (idle)
+                {
+                    if (lastY == nat.current.Y)
+                    {
+                        answer = lastY;
+                    }
+                    else
+                    {
+                        lastY = nat.current.Y;
+                    }
+                    computerBank[0].QueuePacket(nat.current);
+                }
+            }
+            else
+            {
+
+                computerBank[packet.Destination].QueuePacket(packet.ToSend);
+            }
+        };
+
+        for (int i = 0; i < numComputers; i++)
+        {
+            computerBank[i] = new Computer(i, program, packetSender);
+        }
+
+        while (!answer.HasValue)
+        {
+            foreach (var computer in computerBank)
+            {
+                computer.Step();
+            }
+        }
+        return answer.Value.ToString();
     }
 }
